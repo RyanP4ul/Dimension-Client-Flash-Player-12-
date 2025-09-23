@@ -534,46 +534,6 @@ public class LPFFrameEnhText extends LPFFrame
 
             if (iSel != null)
             {
-                if (iSel.hasOwnProperty("iRune") && iSel.iRune > 0)
-                {
-                    mcRuneContainer = new MovieClip();
-                    mcRuneContainer.name = "mcRuneContainer";
-                    mcRuneContainer.x = 2;
-                    mcRuneContainer.y = 120;
-                    addChild(mcRuneContainer);
-
-                    for (var rune:int = 0; rune < iSel.iRune; rune++)
-                    {
-                        var runeSlot:ItemRuneSlot = new ItemRuneSlot();
-                        runeSlot.x = (runeSlot.width + 5) * mcRuneContainer.numChildren;
-
-                        if (iSel.hasOwnProperty("runes"))
-                        {
-                            var runeObj:Object = iSel.runes[rune];
-
-                            if (runeObj != null)
-                            {
-                                try {
-                                    var AssetClass:Class = game.world.getClass(runeObj.Icon);
-                                    var icon:MovieClip = new AssetClass();
-                                    icon.scaleX = icon.scaleY = 0.5;
-                                    icon.x = runeSlot.width / 2 - icon.width / 2;
-                                    icon.y = runeSlot.height / 2 - icon.height / 2;
-                                    runeSlot.data = runeObj;
-                                    runeSlot.addChild(icon);
-                                    runeSlot.slot.visible = false;
-                                    runeSlot.addEventListener(MouseEvent.MOUSE_OVER, onRuneSlotMouseOver, false, 0, true);
-                                    runeSlot.addEventListener(MouseEvent.MOUSE_OUT, onRuneSlotMouseOut, false, 0, true);
-                                } catch(e:Error) {
-                                    trace("Error loading rune asset: " + e.message);
-                                }
-                            }
-                        }
-
-                        mcRuneContainer.addChild(runeSlot);
-                    }
-                }
-
                 if (iSel.hasOwnProperty("effects"))
                 {
                     _local_12 = false;
@@ -712,7 +672,47 @@ public class LPFFrameEnhText extends LPFFrame
                     }
                 }
 
+                if (iSel.hasOwnProperty("iRune") && iSel.iRune > 0)
+                {
+                    mcRuneContainer = new MovieClip();
+                    mcRuneContainer.name = "mcRuneContainer";
+                    mcRuneContainer.x = 2;
+                    mcRuneContainer.y = iSel.hasOwnProperty("effects") ? 120 : 155;
+                    addChild(mcRuneContainer);
+
+                    for (var rune:int = 0; rune < iSel.iRune; rune++)
+                    {
+                        var runeSlot:ItemRuneSlot = new ItemRuneSlot();
+                        runeSlot.x = (runeSlot.width + 5) * mcRuneContainer.numChildren;
+
+                        if (iSel.hasOwnProperty("runes"))
+                        {
+                            var runeObj:Object = iSel.runes[rune];
+
+                            if (runeObj != null)
+                            {
+                                try {
+                                    var AssetClass:Class = game.world.getClass(runeObj.Icon);
+                                    var icon:MovieClip = new AssetClass();
+                                    icon.scaleX = icon.scaleY = 0.4;
+                                    icon.x = runeSlot.width / 2 - icon.width / 2;
+                                    icon.y = runeSlot.height / 2 - icon.height / 2;
+                                    runeSlot.data = runeObj;
+                                    runeSlot.addChild(icon);
+                                    runeSlot.slot.visible = false;
+                                    runeSlot.addEventListener(MouseEvent.MOUSE_OVER, onRuneSlotMouseOver, false, 0, true);
+                                    runeSlot.addEventListener(MouseEvent.MOUSE_OUT, onRuneSlotMouseOut, false, 0, true);
+                                } catch(e:Error) {
+                                    trace("Error loading rune asset: " + e.message);
+                                }
+                            }
+                        }
+
+                        mcRuneContainer.addChild(runeSlot);
+                    }
                 }
+
+            }
         }
 
         private function onRuneSlotMouseOver(event:MouseEvent):void

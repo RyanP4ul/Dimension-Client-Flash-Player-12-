@@ -3880,67 +3880,52 @@ public class World extends MovieClip {
         }
     }
 
-    public function maximumShopBuys(_arg_1:Object):int
+    public function maximumShopBuys(item:Object):int
     {
-        var _local_4:*;
-        var _local_5:*;
-        var _local_6:*;
-        var _local_7:*;
-        var _local_8:*;
-        if (_arg_1 == null)
+        if (item == null) return 0;
+
+        var ownedItem:Object = myAvatar.getItemByID(item.ItemID);
+
+        // "ar" items can only be bought once
+        if (item.sES == "ar") return 1;
+
+        // Max buys based on stack size
+        var maxBuys:int = (ownedItem != null) ? (item.iStk - ownedItem.iQty) : item.iStk;
+        if (maxBuys < 1) return 0;
+
+        // Check cost affordability
+        if (item.intCopper > 0 || item.intSilver > 0 || item.intGold > 0)
         {
-            return (0);
+            var maxCopper:int = (item.intCopper > 0) ? int(myAvatar.objData.intCopper / item.intCopper) : int.MAX_VALUE;
+            var maxSilver:int = (item.intSilver > 0) ? int(myAvatar.objData.intSilver / item.intSilver) : int.MAX_VALUE;
+            var maxGold:int   = (item.intGold > 0)   ? int(myAvatar.objData.intGold / item.intGold)     : int.MAX_VALUE;
+
+            maxBuys = Math.min(maxCopper, Math.min(maxSilver, maxGold));
         }
-        var _local_2:* = myAvatar.getItemByID(_arg_1.ItemID);
-        if (_arg_1.sES == "ar")
+
+        // Check turn-in requirements
+        if (item.turnin != null)
         {
-            return (1);
-        }
-        var _local_3:Number = ((_local_2 != null) ? (_arg_1.iStk - _local_2.iQty) : _arg_1.iStk);
-        if (_local_3 < 1)
-        {
-            return (0);
-        }
-        if (_arg_1.iCost > 0)
-        {
-            if (_arg_1.bGold == 1)
+            for each (var req:Object in item.turnin)
             {
-                _local_4 = Math.floor(myAvatar.objData.intGold / _arg_1.iCost);
-            }
-            else if (_arg_1.bSilver == 1)
-            {
-                _local_4 = Math.floor(myAvatar.objData.intSilver / _arg_1.iCost);
-            }
-            else
-            {
-                _local_4 = Math.floor(myAvatar.objData.intGold / _arg_1.iCost);
+                var reqItem:Object = myAvatar.getItemByID(req.ItemID);
+                if (reqItem == null) return 0;
+
+                var reqBuys:int = Math.floor(reqItem.iQty / req.iQty);
+                if (reqBuys == 0) return 0;
+
+                maxBuys = Math.min(maxBuys, reqBuys);
             }
 
-            _local_3 = Math.min(_local_4, _local_3);
+            maxBuys *= item.iQty;
         }
-        if (_arg_1.turnin != null)
-        {
-            _local_5 = 0;
-            while (_local_5 < _arg_1.turnin.length)
-            {
-                _local_6 = _arg_1.turnin[_local_5];
-                _local_7 = myAvatar.getItemByID(_local_6.ItemID);
-                if (_local_7 == null)
-                {
-                    return (0);
-                }
-                _local_8 = Math.floor((_local_7.iQty / _local_6.iQty));
-                if (_local_8 == 0)
-                {
-                    return (0);
-                }
-                _local_3 = Math.min(_local_3, _local_8);
-                _local_5++;
-            }
-            _local_3 = (_local_3 * _arg_1.iQty);
-        }
-        _local_3 = Math.min(_local_3, 100000);
-        return (Math.min(_local_3, ((_local_2 != null) ? (_arg_1.iStk - _local_2.iQty) : _arg_1.iStk)));
+
+        // Final cap (safe bounds)
+        maxBuys = Math.min(maxBuys, 100000);
+
+        // Ensure doesn’t exceed stack limit again
+        var maxStack:int = (ownedItem != null) ? (item.iStk - ownedItem.iQty) : item.iStk;
+        return Math.min(maxBuys, maxStack);
     }
 
     public function sendSellItemRequest(_arg_1:Object):void {

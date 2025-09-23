@@ -71,12 +71,12 @@ import flash.display.MovieClip;
             visible = false;
 
             var quantity:int = 1;
+            var isShopSell:Boolean = getLayout().sMode == "shopSell";
 
             if (getLayout().sMode.indexOf("shop") > -1 && fData != null) {
-
-                var intCopper:int = fData ? fData.intCopper : 0;
-                var intSilver:int = fData ? fData.intSilver : 0;
-                var intGold:int = fData ? fData.intGold : 0;
+                var intCopper:int = fData ? (isShopSell ? fData.intCopper / 4 : fData.intCopper) : 0;
+                var intSilver:int = fData ? (isShopSell ? fData.intSilver / 4 : fData.intSilver) : 0;
+                var intGold:int   = fData ? (isShopSell ? fData.intSilver / 4 : fData.intGold) : 0;
 
                 if (intCopper == 0 && intSilver == 0 && intGold == 0) return;
 
@@ -107,12 +107,12 @@ import flash.display.MovieClip;
         {
             var xPos:int = padding;
 
-            if (gold > 0)  xPos = addPart(gold, new CurrencyIconGold(), "_gold", xPos);
-            if (silver > 0) xPos = addPart(silver, new CurrencyIconSilver(), "_silver", xPos);
-            if (copper > 0) xPos = addPart(copper, new CurrencyIconCopper(), "_copper", xPos);
+            if (gold > 0)  xPos = addPart(gold, game.world.myAvatar.objData.intGold, new CurrencyIconGold(), "_gold", xPos);
+            if (silver > 0) xPos = addPart(silver, game.world.myAvatar.objData.intSilver ,new CurrencyIconSilver(), "_silver", xPos);
+            if (copper > 0) xPos = addPart(copper, game.world.myAvatar.objData.intCopper, new CurrencyIconCopper(), "_copper", xPos);
 
             if (gold == 0 && silver == 0 && copper == 0)
-                xPos = addPart(0, new CurrencyIconCopper(), "_copper", xPos);
+                xPos = addPart(0, game.world.myAvatar.objData.intCopper, new CurrencyIconCopper(), "_copper", xPos);
 
             var totalW:int = xPos + padding;
 
@@ -133,11 +133,11 @@ import flash.display.MovieClip;
             bg.height = 35;
         }
 
-        private function addPart(amount:int, icon:MovieClip, name:String, xPos:int):int
+        private function addPart(amount:int, current:int, icon:MovieClip, name:String, xPos:int):int
         {
             var tf:TextField = new TextField();
             tf.name = "_cost";
-            tf.defaultTextFormat = new TextFormat("Calibri", 14, 0xFFFFFF);
+            tf.defaultTextFormat = new TextFormat("Calibri", 14, amount > current ? 0xFF0000 : 0xFFFFFF);
             tf.autoSize = "left";
             tf.text = amount.toString();
             tf.selectable = false;
@@ -164,16 +164,17 @@ import flash.display.MovieClip;
             icon.y = padding + 5;
             addChild(icon);
 
-            return icon.x + icon.width + spacing; // new xPos for next currency
+            return icon.x + icon.width + spacing;
         }
 
 
         private function hasSlider():Boolean
         {
-            if (((getLayout().sMode == "shopBuy") && ((game.world.maximumShopBuys(fData) < 2) || ((fData.bGold == 1) && (fData.iCost > 0)))))
+            if (getLayout().sMode == "shopBuy" && (game.world.maximumShopBuys(fData) < 2))
             {
                 return false;
             }
+
             if (((getLayout().sMode == "shopSell") && (game.world.maximumShopSells(fData) < 2)))
             {
                 return false;

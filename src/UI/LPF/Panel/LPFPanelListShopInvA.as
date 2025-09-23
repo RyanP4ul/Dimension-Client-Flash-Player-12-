@@ -123,7 +123,7 @@ import flash.text.*;
             };
             addFrame(_local_3);
 
-            if (isInv || isHouse || isShop)
+            if (isInv || isHouse || isShop || MovieClip(fParent).game.world.isVendorShop)
             {
                 _local_3 = {};
                 _local_3.frame = new LPFFrameGoldDisplay();

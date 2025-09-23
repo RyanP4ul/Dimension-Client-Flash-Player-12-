@@ -93,7 +93,7 @@ public class LPFElementListItemItem extends LPFElementListItem
 
             mcFav.visible = fData.bFav == 1;
             favBG.visible = fData.bFav == 1;
-            mcBoost.visible = fData.hasOwnProperty("effects") || fData.hasOwnProperty("skills");
+            mcBoost.visible = fData.hasOwnProperty("effects") || fData.hasOwnProperty("runes") || fData.hasOwnProperty("skills");
             tType.htmlText = fData.sType;
 
             var rarity:Object = game.world.rarity[fData.iRty];
@@ -243,7 +243,7 @@ public class LPFElementListItemItem extends LPFElementListItem
 //                    iconRing.bg.transform.colorTransform = getCatCT(enh.sDesc);
 //                }
 
-                icon.filters = [new GlowFilter(game.world.rarity[fData.hasOwnProperty("iRty") ? fData.iRty : 1].Color, 0.5, 10, 10, 2, 3, false, false)];
+                icon.filters = [new GlowFilter(game.world.rarity[fData.hasOwnProperty("iRty") ? fData.iRty : 1].Color, 0.5, 10, 10, 3, 4, false, false)];
 
                 eqpBG.visible = false;
                 if (fData.bEquip == 1)
