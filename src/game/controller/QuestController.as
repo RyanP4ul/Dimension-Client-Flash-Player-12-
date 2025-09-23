@@ -26,9 +26,9 @@ public class QuestController {
         delete _data[questId];
     }
 
-    public static function isQuestComplete(questId:int) : Boolean
+    public static function isQuestComplete(chainId:int, prerequisite:int) : Boolean
     {
-        return game.world.myAvatar.objData.quests.indexOf(questId) > -1;
+        return game.world.myAvatar.objData.quests.hasOwnProperty(chainId) && game.world.myAvatar.objData.quests[chainId] >= prerequisite;
     }
 
     public static function addAccept(questId:int, data:Object):void

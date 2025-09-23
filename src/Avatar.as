@@ -177,17 +177,21 @@ public class Avatar {
             petMC.x = (pMC.x - 20);
             petMC.y = (pMC.y + 5);
         }
-        var avt:Avatar = game.world.getAvatarByUserName(objData.strUsername.toLowerCase());
-        if (avt.isMyAvatar) {
-            game.ui.mcPetPortrait.visible = true;
-            game.ui.btnTargetPetPortraitClose.visible = true;
+		
+		if (objData.eqp["pe"].sType == "BattlePet")
+		{
+			var avt:Avatar = game.world.getAvatarByUserName(objData.strUsername.toLowerCase());
+			if (avt.isMyAvatar) {
+				game.ui.mcPetPortrait.visible = true;
+				game.ui.btnTargetPetPortraitClose.visible = true;
 
-            avt.objData.eqp["pe"].sLink = this.objData.eqp["pe"].sLink;
+				avt.objData.eqp["pe"].sLink = this.objData.eqp["pe"].sLink;
 
-            // petMC.pAV.npcType = "pet";
-            game.ui.mcPetPortrait.pAV = petMC.pAV;
-            game.world.updatePetPortrait(petMC.pAV);
-        }
+				// petMC.pAV.npcType = "pet";
+				game.ui.mcPetPortrait.pAV = petMC.pAV;
+				game.world.updatePetPortrait(petMC.pAV);
+			}
+		}
     }
 
     public function unloadPet():void {

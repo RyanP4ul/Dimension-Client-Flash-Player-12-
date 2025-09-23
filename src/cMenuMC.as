@@ -37,7 +37,7 @@ public class cMenuMC extends MovieClip
         mc.addEventListener(MouseEvent.MOUSE_OUT, mouseOut);
         fData = {};
         fData.params = {};
-        fData.user = ["Char Page", "Is Staff?", "Whisper", "Add Friend", "Go To", "Invite", "Delete Friend", "Ignore", "Trade", "Examine", "Close"];
+        fData.user = ["Char Page", "Is Staff?", "Whisper", "Add Friend", "Go To", "Invite", "Delete Friend", "Ignore", "Trade", "Shops", "Examine", "Close"];
         fData.party = ["Char Page", "Whisper", "Add Friend", "Go To", "Remove", "Summon", "Promote", "Delete Friend", "Ignore", "Examine", "Close"];
         fData.self = ["Char Page", "Reputation", "Leave Party", "Examine", "Close"];
         fData.pvpqueue = ["Leave Queue", "Close"];
@@ -372,6 +372,9 @@ public class cMenuMC extends MovieClip
                 rootClass.mcExamine.y = 90;
                 rootClass.ui.addChild(rootClass.mcExamine);
                 break;
+			case "shops":
+				rootClass.net.send("loadVendor", [_local_4]);
+				break;
         }
     }
 

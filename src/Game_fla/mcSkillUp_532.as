@@ -29,7 +29,7 @@ package Game_fla
     public dynamic class mcSkillUp_532 extends MovieClip 
     {
 
-        public var rootClass:MovieClip;
+        public var rootClass:Game = Game.root;
         public var c:int;
         public var t:int;
 
@@ -41,19 +41,22 @@ package Game_fla
         public function fClose():void
         {
             this.gotoAndStop("reset");
+            
+            setTimeout(function () : void {
+                rootClass.ui.removeChild(this);
+            }, 2000);
         }
 
         public function onSkillUpClick(_arg_1:MouseEvent):void
         {
-            rootClass.toggleCharpanel("spend");
+            rootClass.toggleCharStatspanel();
             fClose();
         }
 
         internal function frame1():*
         {
             this.visible = false;
-            this.x = 961;
-            rootClass = (stage.getChildAt(0) as MovieClip);
+            this.x = 1140;
             c = 0;
             t = 60;
             this.addEventListener(MouseEvent.CLICK, onSkillUpClick, false, 0, true);
@@ -63,15 +66,15 @@ package Game_fla
 
         internal function frame2():*
         {
-            this.visible = false;
-            this.x = 961;
+            visible = false;
+            x = 1140;
             stop();
         }
 
         internal function frame11():*
         {
-            this.visible = true;
-            this.x = 766;
+            visible = true;
+            x = 1069;
             c = 0;
         }
 
@@ -84,7 +87,7 @@ package Game_fla
             else
             {
                 fClose();
-            };
+            }
         }
 
 

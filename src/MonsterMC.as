@@ -3,7 +3,7 @@
 
 //MonsterMC
 
-package 
+package
 {
     import flash.display.MovieClip;
     import flash.display.Loader;
@@ -17,8 +17,9 @@ package
     import flash.events.Event;
     import flash.display.Sprite;
     import flash.display.Graphics;
+import flash.utils.getTimer;
 
-    public class MonsterMC extends MovieClip 
+public class MonsterMC extends MovieClip
     {
 
         private var game:Game = Game.root;
@@ -65,6 +66,13 @@ package
         private var attacks:Array;
         public var lastFlickerTime:int = 0;
 
+
+
+        private var _lastFrameTime:int = 0;
+        private var _frameInterval:int = 33; // ~30 FPS
+        private var _lastVisibilityCheck:int = 0;
+        private var _visibilityCheckInterval:int = 500; // Check visibility every 500ms
+
         public function MonsterMC(_arg_1:String)
         {
             defaultCT = MovieClip(this).transform.colorTransform;
@@ -95,13 +103,53 @@ package
             mcChar.addEventListener(MouseEvent.CLICK, onClickHandler);
             pname.addEventListener(MouseEvent.CLICK, onClickHandler);
             despawnTimer.addEventListener(TimerEvent.TIMER, despawn);
-            this.addEventListener(Event.ENTER_FRAME, checkQueue, false, 0, true);
+            this.addEventListener(Event.ENTER_FRAME, onOptimizedEnterFrame, false, 0, true);
             pname.mouseChildren = false;
             mcChar.buttonMode = true;
             pname.buttonMode = true;
             shadow.mouseEnabled = (shadow.mouseChildren = false);
             mcChar.cacheAsBitmap = true;
             setVisible();
+        }
+
+        private function onOptimizedEnterFrame(event:Event):void
+        {
+            var currentTime:int = getTimer();
+
+            // Frame rate limiting
+            if (currentTime - _lastFrameTime < _frameInterval) {
+                return;
+            }
+            _lastFrameTime = currentTime;
+
+            // Check visibility periodically instead of every frame
+            if (currentTime - _lastVisibilityCheck > _visibilityCheckInterval) {
+                _lastVisibilityCheck = currentTime;
+                updateVisibility();
+            }
+
+            // Check animation queue
+            checkQueue(event);
+        }
+
+        private function updateVisibility():void
+        {
+            // Only update if this monster is actually visible on screen
+            if (stage && this.visible)
+            {
+                var globalPos:Point = localToGlobal(new Point(0, 0));
+                var viewRect:Rectangle = new Rectangle(0, 0, stage.stageWidth, stage.stageHeight);
+
+                // If monster is not in view, reduce its update frequency
+                if (!viewRect.containsPoint(globalPos))
+                {
+                    // Skip some updates for off-screen monsters
+                    if (Math.random() > 0.3) // 70% chance to skip update
+                    {
+                        return;
+                    }
+                }
+            }
         }
 
         public function setVisible():*
@@ -243,11 +291,15 @@ package
         {
             var _local_2:MovieClip = (MovieClip(stage.getChildAt(0)).world as MovieClip);
             var _local_3:String = mcChar.currentLabel;
+
             if ((((hasLabel(_arg_1)) && (pAV.dataLeaf.intState > 0)) && (_local_2.staticAnims.indexOf(_local_3) == -1)))
             {
                 if (((_local_2.combatAnims.indexOf(_arg_1) > -1) && (_local_2.combatAnims.indexOf(_local_3) > -1)))
                 {
-                    animQueue.push(_arg_1);
+                    // Limit queue size to prevent memory issues
+                    if (animQueue.length < 3) {
+                        animQueue.push(_arg_1);
+                    }
                 }
                 else
                 {
@@ -258,22 +310,20 @@ package
 
         private function checkQueue(_arg_1:Event):Boolean
         {
-            var _local_2:MovieClip;
-            var _local_3:String;
-            var _local_4:int;
             if (animQueue.length > 0)
             {
-                _local_2 = (MovieClip(stage.getChildAt(0)).world as MovieClip);
-                _local_3 = mcChar.currentLabel;
-                _local_4 = emoteLoopFrame();
+                var _local_2:MovieClip = (MovieClip(stage.getChildAt(0)).world as MovieClip);
+                var _local_3:String = mcChar.currentLabel;
+                var _local_4:int = emoteLoopFrame();
+
                 if (((_local_2.combatAnims.indexOf(_local_3) > -1) && (mcChar.currentFrame >= (_local_4 + 4))))
                 {
                     mcChar.gotoAndPlay(animQueue[0]);
                     animQueue.shift();
-                    return (true);
+                    return true;
                 }
             }
-            return (false);
+            return false;
         }
 
         public function clearQueue():void
@@ -474,7 +524,13 @@ package
         {
             animQueue = [];
 
-            if (!Game.root.preference.data.bDisLoadMon) MovieClip(this.getChildAt(1)).gotoAndPlay("Die");
+            if (!Game.root.preference.data.bDisLoadMon)
+            {
+                if (this.visible && stage)
+                {
+                    MovieClip(this.getChildAt(1)).gotoAndPlay("Die");
+                }
+            }
 
             mcChar.mouseEnabled = false;
             mcChar.mouseChildren = false;
@@ -535,40 +591,50 @@ package
 
         private function drawHitBox():void
         {
+            // Only draw hitbox if debugging is enabled
+            if (hitboxDO != null)
+            {
+                mcChar.removeChild(hitboxDO);
+                hitboxDO = null;
+                return;
+            }
+
             if (hitboxDO != null)
             {
                 mcChar.removeChild(hitboxDO);
             }
             hitboxDO = null;
+
             var _local_1:Rectangle = mcChar.getBounds(stage);
             var _local_2:Point = _local_1.topLeft;
             var _local_3:Point = _local_1.bottomRight;
             _local_2 = mcChar.globalToLocal(_local_2);
             _local_3 = mcChar.globalToLocal(_local_3);
             _local_1 = new Rectangle(_local_2.x, _local_2.y, (_local_3.x - _local_2.x), (_local_3.y - _local_2.y));
+
             var _local_4:int = (_local_1.x + (_local_1.width * 0.2));
             if (_local_4 > (shadow.x - shadow.width))
             {
                 _local_4 = (shadow.x - shadow.width);
             }
+
             var _local_5:int = (_local_1.width * 0.6);
             if (_local_5 < (2 * shadow.width))
             {
                 _local_5 = (2 * shadow.width);
             }
+
             var _local_6:int = (_local_1.y + (_local_1.height * 0.2));
             var _local_7:int = (_local_1.height * 0.6);
             hitbox = new Rectangle(_local_4, _local_6, _local_5, _local_7);
+
             var _local_8:Sprite = new Sprite();
             var _local_9:Graphics = _local_8.graphics;
             _local_9.lineStyle(0, 0xFFFFFF, 0);
             _local_9.beginFill(0xAA00FF, 0);
-            _local_9.moveTo(_local_4, _local_6);
-            _local_9.lineTo((_local_4 + _local_5), _local_6);
-            _local_9.lineTo((_local_4 + _local_5), (_local_6 + _local_7));
-            _local_9.lineTo(_local_4, (_local_6 + _local_7));
-            _local_9.lineTo(_local_4, _local_6);
+            _local_9.drawRect(_local_4, _local_6, _local_5, _local_7);
             _local_9.endFill();
+
             hitboxDO = mcChar.addChild(_local_8);
         }
 
@@ -579,5 +645,5 @@ package
 
 
     }
-}//package 
+}//package
 

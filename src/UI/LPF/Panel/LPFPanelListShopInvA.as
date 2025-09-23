@@ -73,7 +73,7 @@ import flash.text.*;
             var isOutfit:Boolean = MovieClip(fParent).game.ui.mcPopup.currentLabel == "OutfitInventory";
             var isLoot:Boolean = MovieClip(fParent).game.ui.mcPopup.currentLabel == "Loot";
             var isTemp:Boolean = MovieClip(fParent).game.ui.mcPopup.currentLabel == "Temporary";
-            var isShop:Boolean = fParent.sMode.indexOf("shop") > -1;
+            var isShop:Boolean = fParent.sMode.indexOf("shop") > -1 && !MovieClip(fParent).game.world.isVendorShop;
 
             var _local_3:Object = {};
 
@@ -267,13 +267,13 @@ import flash.text.*;
                 "h": isShop ? _local_4 - 30 : (isOutfit || isLoot || isTemp ? _local_4 + 20 : _local_4)
             };
             _local_3.tabStates = MovieClip(fParent).getTabStates();
-            _local_3.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring", "Pet"];
+            _local_3.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Rune", "Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring", "Pet", "BattlePet"];
             _local_3.filterMap = {
-                "Weapon":["Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand"],
+                "Weapon":["Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand", "Rune"],
                 "ar":["Class", "Armor"],
                 "he":["Helm"],
                 "ba":["Cape"],
-                "pe":["Pet"],
+                "pe":["Pet", "BattlePet"],
                 "am":["Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring"],
                 "it":["Note", "Resource", "Item", "Quest Item", "ServerUse"],
                 "enh":["Enhancement"],

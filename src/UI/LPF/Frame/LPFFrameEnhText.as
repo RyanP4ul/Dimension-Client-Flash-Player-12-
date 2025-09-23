@@ -28,6 +28,7 @@ public class LPFFrameEnhText extends LPFFrame
         public var tEnh:TextField;
 
         internal var mcContainer:MovieClip;
+        internal var mcRuneContainer:MovieClip;
         internal var boostsObj:Object;
 
         private var iSel:Object;
@@ -72,6 +73,8 @@ public class LPFFrameEnhText extends LPFFrame
                 _local_1 = mcStats.getChildAt(1);
                 _local_1.removeEventListener(MouseEvent.MOUSE_OVER, onTTFieldMouseOver);
                 _local_1.removeEventListener(MouseEvent.MOUSE_OUT, onTTFieldMouseOut);
+                _local_1.removeEventListener(MouseEvent.MOUSE_OVER, onRuneSlotMouseOver);
+                _local_1.removeEventListener(MouseEvent.MOUSE_OUT, onRuneSlotMouseOut);
                 mcStats.removeChildAt(1);
             }
 
@@ -101,6 +104,22 @@ public class LPFFrameEnhText extends LPFFrame
             var wDMX:int;
             var tDescStr:String = "";
             var patternNameColor:String = "#00CCFF";
+
+            trace("EnhText > iSel > " + JSON.stringify(iSel));
+            trace("EnhText > eSel > " + JSON.stringify(eSel));
+
+            if (eSel != null && eSel.sType.toLowerCase() == "rune") return;
+            if (iSel != null && iSel.sType.toLowerCase() == "rune")
+            {
+                while (mcStats.numChildren > 1)
+                {
+                    mcStats.removeChildAt(1);
+                }
+
+                tDesc.htmlText =  "Rune for <b><font color='#00CCFF'>" + iSel.sES + "</font></b><br><font color='#FF0000'>Runes cannot be enhanced!</font>";
+                return;
+            }
+
             if (iSel != null)
             {
                 tDescStr = "<font size='10' color='#FFFFFF'>Enhancement: </font>";
@@ -317,9 +336,6 @@ public class LPFFrameEnhText extends LPFFrame
                 else
                 {
                     tDescStr = (tDescStr + "<font size='10' color='#00CCFF'>This item cannot be enhanced.</font>");
-                    if (((((iSel.sES == "pe") || (iSel.sES == "co")) || (iSel.sES == "am")) || (((iSel.sType.toLowerCase() == "item") && (!(iSel.sLink == null))) && (!(iSel.sLink == "")))))
-                    {
-                    }
                 }
                 tDesc.htmlText = tDescStr;
                 showStats();
@@ -513,161 +529,200 @@ public class LPFFrameEnhText extends LPFFrame
                 mcStats.visible = false;
             }
 
-            if (((mcContainer) && (getChildByName("mcContainer"))))
+            if (mcContainer && getChildByName("mcContainer")) removeChild(getChildByName("mcContainer"));
+            if (mcRuneContainer && getChildByName("mcRuneContainer")) removeChild(getChildByName("mcRuneContainer"));
+
+            if (iSel != null)
             {
-                removeChild(getChildByName("mcContainer"));
-            }
+                if (iSel.hasOwnProperty("iRune") && iSel.iRune > 0)
+                {
+                    mcRuneContainer = new MovieClip();
+                    mcRuneContainer.name = "mcRuneContainer";
+                    mcRuneContainer.x = 2;
+                    mcRuneContainer.y = 120;
+                    addChild(mcRuneContainer);
 
-            if (((((!(iSel == null)) && (!(iSel.sMeta == null))) && (!(iSel.sMeta is Number))) && (iSel.sMeta.indexOf(":") > -1)))
-            {
-                _local_12 = false;
-                switch (iSel.sES)
-                {
-                    case "he":
-                    case "ba":
-                    case "Weapon":
-                    case "pe":
-                    case "co":
-                    case "mi":
-                        _local_12 = true;
-                        break;
-                }
-                if (!_local_12)
-                {
-                    return;
-                }
-                boostsObj = {};
-                mcContainer = new BoostContainer();
-                iEnh = null;
-                if (iSel.PatternID != null)
-                {
-                    iEnh = game.world.enhPatternTree[iSel.PatternID];
-                }
-                if (iSel.EnhPatternID != null)
-                {
-                    iEnh = game.world.enhPatternTree[iSel.EnhPatternID];
-                }
-
-                addChild(mcContainer);
-                mcContainer.name = "mcContainer";
-                mcContainer.x = 2;
-                mcContainer.y = 155;
-
-                while (mcContainer.numChildren > 0)
-                {
-                    mcContainer.removeChildAt(0);
-                }
-                _local_13 = iSel.sMeta.split(",");
-                _local_14 = new DamageBoost();
-                if (!boostsObj["dmgBoost"])
-                {
-                    boostsObj["dmgBoost"] = "";
-                }
-                for each (_local_16 in _local_13)
-                {
-                    _local_19 = _local_16.split(":")[1];
-                    _local_15 = Math.abs(Math.round(((Number(_local_19) - 1) * 100))).toString();
-                    switch (_local_16.split(":")[0].toLowerCase())
+                    for (var rune:int = 0; rune < iSel.iRune; rune++)
                     {
-                        case "dmgall":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("All +" + _local_15) + "%\n"));
-                            break;
-                        case "undead":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Undead +" + _local_15) + "%\n"));
-                            break;
-                        case "human":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Human +" + _local_15) + "%\n"));
-                            break;
-                        case "chaos":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Chaos +" + _local_15) + "%\n"));
-                            break;
-                        case "dragonkin":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Dragonkin +" + _local_15) + "%\n"));
-                            break;
-                        case "orc":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Orc +" + _local_15) + "%\n"));
-                            break;
-                        case "drakath":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Drakath +" + _local_15) + "%\n"));
-                            break;
-                        case "elemental":
-                            boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Elemental +" + _local_15) + "%\n"));
-                            break;
-                        case "cp":
-                            boostsObj["classBoost"] = (("Class Points +" + _local_15) + "%");
-                            break;
-                        case "gold":
-                            boostsObj["goldBoost"] = (("Gold +" + _local_15) + "%");
-                            break;
-                        case "rep":
-                            boostsObj["repBoost"] = (("Reputation +" + _local_15) + "%");
-                            break;
-                        case "exp":
-                            boostsObj["xpBoost"] = (("Experience +" + _local_15) + "%");
-                            break;
+                        var runeSlot:ItemRuneSlot = new ItemRuneSlot();
+                        runeSlot.x = (runeSlot.width + 5) * mcRuneContainer.numChildren;
+
+                        if (iSel.hasOwnProperty("runes"))
+                        {
+                            var runeObj:Object = iSel.runes[rune];
+
+                            if (runeObj != null)
+                            {
+                                try {
+                                    var AssetClass:Class = game.world.getClass(runeObj.Icon);
+                                    var icon:MovieClip = new AssetClass();
+                                    icon.scaleX = icon.scaleY = 0.5;
+                                    icon.x = runeSlot.width / 2 - icon.width / 2;
+                                    icon.y = runeSlot.height / 2 - icon.height / 2;
+                                    runeSlot.data = runeObj;
+                                    runeSlot.addChild(icon);
+                                    runeSlot.slot.visible = false;
+                                    runeSlot.addEventListener(MouseEvent.MOUSE_OVER, onRuneSlotMouseOver, false, 0, true);
+                                    runeSlot.addEventListener(MouseEvent.MOUSE_OUT, onRuneSlotMouseOut, false, 0, true);
+                                } catch(e:Error) {
+                                    trace("Error loading rune asset: " + e.message);
+                                }
+                            }
+                        }
+
+                        mcRuneContainer.addChild(runeSlot);
                     }
                 }
-                _local_17 = 30;
-                for (_local_18 in boostsObj)
+
+                if (iSel.hasOwnProperty("effects"))
                 {
-                    switch (_local_18)
+                    _local_12 = false;
+                    switch (iSel.sES)
                     {
-                        case "dmgBoost":
-                            if (boostsObj[_local_18] == "") break;
-                            mcContainer.addChild(_local_14);
-                            _local_14.width = _local_17;
-                            _local_14.height = _local_17;
-                            _local_14.name = "dmgBoost";
-                            _local_14.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
-                            _local_14.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
-                            break;
-                        case "classBoost":
-                            _local_20 = new ClassBoost();
-                            mcContainer.addChild(_local_20);
-                            _local_20.width = _local_17;
-                            _local_20.height = _local_17;
-                            _local_20.name = "classBoost";
-                            _local_20.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
-                            _local_20.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
-                            break;
-                        case "goldBoost":
-                            _local_21 = new GoldBoost();
-                            mcContainer.addChild(_local_21);
-                            _local_21.width = _local_17;
-                            _local_21.height = _local_17;
-                            _local_21.name = "goldBoost";
-                            _local_21.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
-                            _local_21.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
-                            break;
-                        case "repBoost":
-                            _local_22 = new RepBoost();
-                            mcContainer.addChild(_local_22);
-                            _local_22.width = _local_17;
-                            _local_22.height = _local_17;
-                            _local_22.name = "repBoost";
-                            _local_22.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
-                            _local_22.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
-                            break;
-                        case "xpBoost":
-                            _local_23 = new XpBoost();
-                            mcContainer.addChild(_local_23);
-                            _local_23.width = _local_17;
-                            _local_23.height = _local_17;
-                            _local_23.name = "xpBoost";
-                            _local_23.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
-                            _local_23.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
+                        case "he":
+                        case "ba":
+                        case "Weapon":
+                        case "pe":
+                        case "co":
+                        case "mi":
+                            _local_12 = true;
                             break;
                     }
-                }
-                _local_4 = 0;
-                while (_local_4 < mcContainer.numChildren)
-                {
-                    _local_24 = (mcContainer.getChildAt(_local_4) as MovieClip);
-                    _local_24.x = ((_local_4 * _local_24.width) + 2);
-                    _local_4++;
-                }
-            }
+                    if (!_local_12)
+                    {
+                        return;
+                    }
+                    boostsObj = {};
+                    mcContainer = new BoostContainer();
+                    iEnh = null;
+                    if (iSel.PatternID != null)
+                    {
+                        iEnh = game.world.enhPatternTree[iSel.PatternID];
+                    }
+                    if (iSel.EnhPatternID != null)
+                    {
+                        iEnh = game.world.enhPatternTree[iSel.EnhPatternID];
+                    }
 
+                    addChild(mcContainer);
+                    mcContainer.name = "mcContainer";
+                    mcContainer.x = 2;
+                    mcContainer.y = 155;
+
+                    while (mcContainer.numChildren > 0)
+                    {
+                        mcContainer.removeChildAt(0);
+                    }
+                    _local_13 = iSel.effects;
+                    _local_14 = new DamageBoost();
+                    if (!boostsObj["dmgBoost"])
+                    {
+                        boostsObj["dmgBoost"] = "";
+                    }
+
+                    for each (_local_16 in _local_13)
+                    {
+                        _local_15 = Math.abs(Math.round(((Number(_local_16.Value) - 1) * 100))).toString();
+                        switch (_local_16.Effect.toLowerCase())
+                        {
+                            case "dmgall":
+                                boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Damage All +" + _local_15) + "%\n"));
+                                break;
+                            case "dmgtaken":
+                                boostsObj["dmgBoost"] = (boostsObj["dmgBoost"] + (("Damage Taken +" + _local_15) + "%\n"));
+                                break;
+                            case "exp":
+                                boostsObj["xpBoost"] = (("Experience +" + _local_15) + "%");
+                                break;
+                            case "copper":
+                                boostsObj["goldBoost"] = (("Copper +" + _local_15) + "%");
+                                break;
+                            case "silver":
+                                boostsObj["goldBoost"] = (("Silver +" + _local_15) + "%");
+                                break;
+                            case "gold":
+                                boostsObj["goldBoost"] = (("Gold +" + _local_15) + "%");
+                                break;
+                            case "rep":
+                                boostsObj["repBoost"] = (("Reputation +" + _local_15) + "%");
+                                break;
+                            case "cp":
+                                boostsObj["classBoost"] = (("Class Points +" + _local_15) + "%");
+                                break;
+                        }
+                    }
+                    _local_17 = 30;
+                    for (_local_18 in boostsObj)
+                    {
+                        switch (_local_18)
+                        {
+                            case "dmgBoost":
+                                if (boostsObj[_local_18] == "") break;
+                                mcContainer.addChild(_local_14);
+                                _local_14.width = _local_17;
+                                _local_14.height = _local_17;
+                                _local_14.name = "dmgBoost";
+                                _local_14.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
+                                _local_14.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
+                                break;
+                            case "classBoost":
+                                _local_20 = new ClassBoost();
+                                mcContainer.addChild(_local_20);
+                                _local_20.width = _local_17;
+                                _local_20.height = _local_17;
+                                _local_20.name = "classBoost";
+                                _local_20.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
+                                _local_20.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
+                                break;
+                            case "goldBoost":
+                                _local_21 = new GoldBoost();
+                                mcContainer.addChild(_local_21);
+                                _local_21.width = _local_17;
+                                _local_21.height = _local_17;
+                                _local_21.name = "goldBoost";
+                                _local_21.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
+                                _local_21.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
+                                break;
+                            case "repBoost":
+                                _local_22 = new RepBoost();
+                                mcContainer.addChild(_local_22);
+                                _local_22.width = _local_17;
+                                _local_22.height = _local_17;
+                                _local_22.name = "repBoost";
+                                _local_22.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
+                                _local_22.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
+                                break;
+                            case "xpBoost":
+                                _local_23 = new XpBoost();
+                                mcContainer.addChild(_local_23);
+                                _local_23.width = _local_17;
+                                _local_23.height = _local_17;
+                                _local_23.name = "xpBoost";
+                                _local_23.addEventListener(MouseEvent.MOUSE_OVER, onBoostGet, false, 0, true);
+                                _local_23.addEventListener(MouseEvent.MOUSE_OUT, onBoostOut, false, 0, true);
+                                break;
+                        }
+                    }
+                    _local_4 = 0;
+                    while (_local_4 < mcContainer.numChildren)
+                    {
+                        _local_24 = (mcContainer.getChildAt(_local_4) as MovieClip);
+                        _local_24.x = ((_local_4 * _local_24.width) + 2);
+                        _local_4++;
+                    }
+                }
+
+                }
+        }
+
+        private function onRuneSlotMouseOver(event:MouseEvent):void
+        {
+            game.ui.ToolTip.openWith({"str": event.currentTarget.data.Name + "\n" + event.currentTarget.data.Description});
+        }
+
+        private function onRuneSlotMouseOut(_arg_1:MouseEvent):void
+        {
+            game.ui.ToolTip.close();
         }
 
         private function onBoostGet(_arg_1:MouseEvent):void

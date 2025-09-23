@@ -1,5 +1,7 @@
 ﻿package network {
 
+import Game_fla.mcSkillUp_532;
+
 import com.greensock.TweenLite;
 
 import flash.display.Shape;
@@ -115,6 +117,9 @@ public class RequestHandler extends Object {
                 break;
             case "loadShop":
                 LoadShop(o);
+                break;
+			case "loadVendor":
+                LoadVendor(o);
                 break;
             case "loadEnhShop":
                 LoadEnhShop(o);
@@ -466,6 +471,15 @@ public class RequestHandler extends Object {
 			case "attackIndicator":
 				AttackIndicator(o);
 				break;
+            case "addRuneItem":
+                AddRuneItem(o);
+                break;
+            case "sellerVendorItem":
+                SellerVendorItem(o);
+                break;
+            case "buyVendorItem":
+                BuyVendorItem(o);
+                break;
         }
     }
 
@@ -900,9 +914,7 @@ public class RequestHandler extends Object {
     }
 
     private function LoginResponse(o:Object):void {
-	    trace ("RES => 1");
         if (o.success) {
-		    trace ("RES => 2");
             game.mcConnDetail.showConn("Loading Character Data...");
             game.net.myUserId = o.myUserId;
             game.net.myUserName = o.myUserName;
@@ -910,7 +922,7 @@ public class RequestHandler extends Object {
             game.ts_login_server = game.stringToDate(o.time).getTime();
             game.chatF.pushMsg("moderator", o.messageOfTheDay, "SERVER", "", 0);
             game.confirmTime = getTimer();
-            game.resumeOnLoginResponse();
+            game.loadChatChannels();
 //            _game.retrieveInfo(o.settings.split(","));
         } else {
             game.mcConnDetail.showConn(o.msg);
@@ -1051,7 +1063,7 @@ public class RequestHandler extends Object {
             game.world.npcTree[mID] = npcLeaf;
         }
 
-        trace("MoveToArea > " + JSON.stringify(game.world.npcTree));
+//        trace("MoveToArea > " + JSON.stringify(game.world.npcTree));
 
         game.world.setMapEvents("event" in o ? o.event : null);
         game.world.setCellMap("cellMap" in o ? o.cellMap : null);
@@ -1390,9 +1402,17 @@ public class RequestHandler extends Object {
         game.updateXPBar();
         game.showPortraitBox(game.world.myAvatar, game.ui.mcPortrait);
         game.world.myAvatar.levelUp();
+
         if (("updatePStats" in game.world.map)) {
             game.world.map.updatePStats();
         }
+
+        var mcSkillUp:mcSkillUp_532 = new mcSkillUp_532();
+        mcSkillUp.name = "mcSkillUp";
+        mcSkillUp.x = 1069;
+        mcSkillUp.y = 407.95;
+        mcSkillUp.gotoAndPlay("in");
+        game.ui.addChild(mcSkillUp);
     }
 
     private function PetLevelUp(o:Object):void {
@@ -1595,31 +1615,56 @@ public class RequestHandler extends Object {
     }
 
     private function LoadShop(o:Object):void {
-        if ((((((!(game.world.shopinfo == null)) && ("ShopID" in game.world.shopinfo)) && (game.world.shopinfo.ShopID == o.shopinfo.ShopID)) && ("bLimited" in game.world.shopinfo)) && (game.world.shopinfo.bLimited))) {
-            trace(" >>>> Shop reload detected");
-            var i:int = 0;
-            while (i < o.shopinfo.items.length) {
-                game.world.shopinfo.items.push(o.shopinfo.items[i]);
-                game.world.shopinfo.items.shift();
-                i = (i + 1);
+        var shopInfo:Object = game.world.shopinfo;
+        var newShop:Object = o.shopinfo;
+
+        var hasShop:Boolean = shopInfo != null;
+        var sameShop:Boolean = hasShop && ("ShopID" in shopInfo) && (shopInfo.ShopID == newShop.ShopID);
+        var isLimited:Boolean = sameShop && ("bLimited" in shopInfo) && shopInfo.bLimited;
+
+        game.world.isVendorShop = false;
+
+        if (isLimited) {
+            trace(">>>> Shop reload detected");
+
+            // Replace old items with new ones
+            for (var i:int = 0; i < newShop.items.length; i++) {
+                shopInfo.items.push(newShop.items[i]);
+                shopInfo.items.shift();
             }
+
+            // Refresh UI
             if (game.ui.mcPopup.currentLabel == "Shop") {
-                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshItems"});
+                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({ eventType: "refreshItems" });
             } else {
                 game.ui.mcPopup.fOpen("Shop");
             }
+
         } else {
-            game.world.shopinfo = o.shopinfo;
-            if (o.shopinfo.bHouse == 1) {
-                trace("House Shop");
+            // Assign new shop info
+            game.world.shopinfo = newShop;
+
+            if (newShop.bHouse == 1) {
                 game.ui.mcPopup.fOpen("HouseShop");
+            } else if (game.isMergeShop(newShop)) {
+                game.ui.mcPopup.fOpen("MergeShop");
             } else {
-                if (game.isMergeShop(o.shopinfo)) {
-                    game.ui.mcPopup.fOpen("MergeShop");
-                } else {
-                    game.ui.mcPopup.fOpen("Shop");
-                }
+                game.ui.mcPopup.fOpen("Shop");
             }
+        }
+    }
+
+    private function LoadVendor(o:Object) : void
+    {
+        var newShop:Object = o.shopinfo;
+
+        game.world.isVendorShop = true;
+        game.world.shopinfo = newShop;
+
+        if (game.isMergeShop(newShop)) {
+            game.ui.mcPopup.fOpen("MergeShop");
+        } else {
+            game.ui.mcPopup.fOpen("Shop");
         }
     }
 
@@ -1740,13 +1785,17 @@ public class RequestHandler extends Object {
             item.CharItemID = o.CharItemID;
             item.bBank = o.bBank;
 
-            if (item.bGold == 1) {
+            if (item.intGold > 0) {
 			    item.iHrs = 0;
-                game.world.myAvatar.objData.intGold = (game.world.myAvatar.objData.intGold - Number(item.iCost * item.iQty));
-            } else if (item.bSilver == 1) {
-                game.world.myAvatar.objData.intSilver = (game.world.myAvatar.objData.intSilver - Number(item.iCost * item.iQty));
-            } else {
-                game.world.myAvatar.objData.intCopper = (game.world.myAvatar.objData.intCopper - Number(item.iCost * item.iQty));
+                game.world.myAvatar.objData.intGold = (game.world.myAvatar.objData.intGold - Number(item.intGold * item.iQty));
+            }
+			
+			if (item.intSilver > 0) {
+                game.world.myAvatar.objData.intSilver = (game.world.myAvatar.objData.intSilver - Number(item.intSilver * item.iQty));
+            }
+			
+			if (item.intCopper > 0) {
+                game.world.myAvatar.objData.intCopper = (game.world.myAvatar.objData.intCopper - Number(item.intCopper * item.iQty));
             }
 
             if (game.ui.mcPopup.currentLabel == "Inventory") {
@@ -1826,13 +1875,10 @@ public class RequestHandler extends Object {
 
     private function SellItem(o:Object):void {
         game.world.myAvatar.removeItem(o.CharItemID);
-        if (o.bGold == 1) {
-            game.world.myAvatar.objData.intGold = (game.world.myAvatar.objData.intGold + o.intAmount);
-        } else if (o.bSilver == 1) {
-            game.world.myAvatar.objData.intSilver = (game.world.myAvatar.objData.intSilver + o.intAmount);
-        } else {
-            game.world.myAvatar.objData.intCopper = (game.world.myAvatar.objData.intCopper + o.intAmount);
-        }
+		
+        if (o.intGold > 0) game.world.myAvatar.objData.intGold = (game.world.myAvatar.objData.intGold + o.intGold);
+		if (o.intSilver > 0) game.world.myAvatar.objData.intSilver = (game.world.myAvatar.objData.intSilver + o.intSilver);
+		if (o.intCopper > 0) game.world.myAvatar.objData.intCopper = (game.world.myAvatar.objData.intCopper + o.intCopper);
 
         if (game.ui.mcPopup.currentLabel == "Shop") {
             MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshCurrency"});
@@ -2207,22 +2253,33 @@ public class RequestHandler extends Object {
 
 		var questObj:Object = game.world.myAvatar.objData.quests;
 
-        if (o.hasOwnProperty("once") && Boolean(o.once) && questObj.indexOf(o.questId) == -1)
+/*
+        if (o.hasOwnProperty("repeat") && Boolean(o.repeat) && questObj.indexOf(o.chainId) == -1)
         {
             questObj.push(o.questId);
             QuestController.removeQuest(o.questId);
         }
+*/
+		
+		if (o.hasOwnProperty("repeat") && Boolean(o.repeat))
+		{
+			if (!questObj.hasOwnProperty(o.chainId))
+			{
+				questObj.push(o.chainId);
+			}
+		
+			QuestController.removeQuest(o.questId);
+		}
 
-/*
 		if (o.hasOwnProperty("next") && QuestController.Data.hasOwnProperty(String(o.next)))
 		{
             QuestController.Data[int(o.next)].Locked = null;
 		}
 
-*/
-
-
-		if (o.hasOwnProperty("locked")) QuestController.Data[int(o.questId)].Locked = o.locked;
+		if (o.hasOwnProperty("locked"))
+		{
+			QuestController.Data[int(o.questId)].Locked = o.locked;
+		}
 
         var quest:Quests = game.getInstanceFromModalStack("Quests") as Quests;
         if (quest != null) quest.reset();
@@ -3637,6 +3694,126 @@ public class RequestHandler extends Object {
             }
         });
 	}
+
+    private function AddRuneItem(o:Object) : void
+    {
+        game.mixer.playSound("Good");
+
+        var item:Object = game.world.myAvatar.getItemByID(o.ItemID);
+
+        if (item.hasOwnProperty("runes")) {
+            item.runes.push(o.data);
+        } else {
+            item["runes"] = [];
+            item["runes"].push(o.data);
+        }
+
+        if (game.ui.mcPopup.currentLabel == "Inventory") {
+            MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({
+                "eventType": "refreshItems",
+                "sInstruction": "previewEquipOnly"
+            });
+        }
+    }
+
+    private function SellerVendorItem(o:Object) : void
+    {
+        if (o.intGold > 0) game.world.myAvatar.objData.intGold = (game.world.myAvatar.objData.intGold + o.intGold);
+        if (o.intSilver > 0) game.world.myAvatar.objData.intSilver = (game.world.myAvatar.objData.intSilver + o.intSilver);
+        if (o.intCopper > 0) game.world.myAvatar.objData.intCopper = (game.world.myAvatar.objData.intCopper + o.intCopper);
+
+        if (game.ui.mcPopup.currentLabel == "Shop") {
+            MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshCurrency"});
+            MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({
+                "eventType": "refreshItems",
+                "sInstruction": "closeWindows"
+            });
+        } else {
+            if (game.ui.mcPopup.currentLabel == "Inventory") {
+                MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({"eventType": "refreshCurrency"});
+                MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({
+                    "eventType": "refreshItems",
+                    "sInstruction": "closeWindows"
+                });
+            } else {
+                if (game.ui.mcPopup.currentLabel == "HouseShop") {
+                    MovieClip(game.ui.mcPopup.getChildByName("mcHouseShop")).reset();
+                }
+            }
+        }
+
+        if ("items" in o)
+        {
+            for each (var item:Object in o.items)
+            {
+                game.showItemDrop(item, false);
+                if (game.world.invTree[item.ItemID] == null) {
+                    game.world.invTree[item.ItemID] = game.copyObj(o);
+                    game.world.invTree[item.ItemID].iQty = 0;
+                }
+                game.world.myAvatar.addItem(item);
+            }
+        }
+
+        game.mixer.playSound("Good");
+    }
+
+    private function BuyVendorItem(o:Object) : void
+    {
+        var item:Object = game.copyObj(game.world.shopBuyItem);
+        item.iQty = o.iQty;
+        item.CharItemID = o.CharItemID;
+        item.bBank = o.bBank;
+
+        if (o.intGold > 0) {
+            game.world.myAvatar.objData.intGold = (game.world.myAvatar.objData.intGold - Number(o.intGold));
+        }
+
+        if (o.intSilver > 0) {
+            game.world.myAvatar.objData.intSilver = (game.world.myAvatar.objData.intSilver - Number(o.intSilver));
+        }
+
+        if (o.intCopper > 0) {
+            game.world.myAvatar.objData.intCopper = (game.world.myAvatar.objData.intCopper - Number(o.intCopper));
+        }
+
+        if (game.ui.mcPopup.currentLabel == "Inventory") {
+            MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({"eventType": "refreshCurrency"});
+        }
+
+        game.showItemDrop(item, false);
+        if (game.world.invTree[item.ItemID] == null) {
+            game.world.invTree[item.ItemID] = game.copyObj(o);
+            game.world.invTree[item.ItemID].iQty = 0;
+        }
+        game.world.myAvatar.addItem(item);
+
+        if (game.ui.mcPopup.currentLabel == "Shop") {
+            MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshCurrency"});
+            MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({
+                "eventType": "refreshItems",
+                "sInstruction": "closeWindows"
+            });
+            if (game.world.shopinfo.bLimited) {
+                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshShop"});
+            }
+        } else {
+            if (game.ui.mcPopup.currentLabel == "MergeShop") {
+                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshCurrency"});
+                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshItems"});
+            } else {
+                if (game.ui.mcPopup.currentLabel == "Inventory") {
+                    MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({"eventType": "refreshCurrency"});
+                    MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({
+                        "eventType": "refreshItems",
+                        "sInstruction": "closeWindows"
+                    });
+                }
+            }
+        }
+
+        QuestController.updateQuest(item);
+    }
 
 }
 

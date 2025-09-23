@@ -84,52 +84,91 @@ public dynamic class game_1_cnt_6 extends MovieClip
         private function Characters(): void { stop(); }
         private function CreateCharacter(): void { stop(); }
 
+        public var bg;
+
+        private var padding:int = 8;
+        private var gap:int = 4; // space between number and icon
+        private var spacing:int = 8; // space between different currencies
+        private var maxWidth:int = 300;
+
         private function Test(): void {
-//            telegraphedAttack(250, 500, 2); // 2 sec delay
-
-            var mc:MovieClip = new MovieClip();
-            var shape:Shape = new Shape();
-            var width:int = 50;
-            var height:int = 50;
-
-            shape.graphics.beginFill(0xFF0000, 0.5);
-            shape.graphics.drawRect(-width / 2, -height / 2, width, height);
-            shape.graphics.endFill();
-
-            mc.x = 500;
-            mc.y = 500;
-            mc.addChild(shape);
-
-            addChild(mc);
-
+            setCurrency(5, 0, 0);
             stop();
         }
 
-//        function createTelegraphCircle(radius:Number):Sprite {
-//            var s:Sprite = new Sprite();
-//            s.graphics.beginFill(0xFF0000, 0.4);
-//            s.graphics.drawCircle(0, 0, radius);
-//            s.graphics.endFill();
-//            return s;
-//        }
-//
-//        function telegraphedAttack(x:Number, y:Number, delay:Number):void {
-//            var circle:Sprite =createTelegraphCircle(40);
-//            circle.x = x;
-//            circle.y = y;
-//            circle.width = 50;
-//            circle.height = 50;
-//            circle.alpha = 0.1;
-//            addChild(circle);
-//
-//            TweenLite.to(circle, 3.5, {
-//                alpha: 0.5,
-//                repeat: int(delay / 500) - 1,
-//                yoyo: true,
-//                onComplete: function():void {
-//                    removeChild(circle);
-//                }
-//            });
+        public function setCurrency(copper:int = 0, silver:int = 0, gold:int = 0):void
+        {
+            // Remove old children except background
+//            while (numChildren > 1) removeChildAt(1);
+
+            var xPos:int = padding;
+            if (gold > 0)  xPos = addPart(gold, new CurrencyIconGold(), xPos);
+            if (silver > 0) xPos = addPart(silver, new CurrencyIconSilver(), xPos);
+            if (copper > 0) xPos = addPart(copper, new CurrencyIconCopper(), xPos);
+
+            // If all are zero, show "0" + copper icon
+            if (gold == 0 && silver == 0 && copper == 0)
+                xPos = addPart(0, new CurrencyIconCopper(), xPos);
+
+            var totalW:int = xPos + padding;
+
+            if (totalW > maxWidth)
+            {
+                var scale:Number = maxWidth / totalW;
+                this.scaleX = scale;
+                this.scaleY = scale;
+                totalW = maxWidth;
+            }
+            else
+            {
+                this.scaleX = 1;
+                this.scaleY = 1;
+            }
+
+            bg.width = totalW;
+            bg.height = 35;
+            bg.x = 0;
+            bg.y = 0;
+        }
+
+        private function addPart(amount:int, icon:MovieClip, xPos:int):int
+        {
+            var tf:TextField = new TextField();
+            tf.defaultTextFormat = new TextFormat("Calibri", 14, 0xFFFFFF);
+            tf.autoSize = "left";
+            tf.text = amount.toString();
+            tf.selectable = false;
+            addChild(tf);
+
+            var expectedW:int = xPos + tf.textWidth + gap + icon.width;
+            if (expectedW > maxWidth)
+            {
+                // Shrink text only (reduce font size until it fits)
+                var size:int = 14;
+                while (expectedW > maxWidth && size > 8)
+                {
+                    size--;
+                    tf.setTextFormat(new TextFormat("Calibri", size, 0xFFFFFF));
+                    expectedW = xPos + tf.textWidth + gap + icon.width;
+                }
+            }
+
+            tf.x = xPos;
+            tf.y = padding;
+
+            icon.x = tf.x + tf.width + gap;
+            icon.y = padding + 5;
+            addChild(icon);
+
+            return icon.x + icon.width + spacing; // new xPos for next currency
+        }
+
+//        private function drawBackground(w:int, h:int):void
+//        {
+//            bg.graphics.clear();
+//            bg.graphics.beginFill(0x333333, 0.8);
+//            bg.graphics.drawRoundRect(0, 0, w + padding, h, 8, 8);
+//            bg.graphics.endFill();
 //        }
 
 

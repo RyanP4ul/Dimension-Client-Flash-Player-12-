@@ -44,6 +44,7 @@ import flash.display.MovieClip;
         public var btnOption:SimpleButton;
         public var btnLoot:SimpleButton;
         public var menu:*;
+		public var mcLootContainer:MovieClip;
 
         public function mcMenu_286()
         {
@@ -265,6 +266,7 @@ import flash.display.MovieClip;
 
         private function frame1() : void
         {
+			mcLootContainer.visible = false;
             btnRest.addEventListener(MouseEvent.MOUSE_OVER, onMouseOver);
             btnRest.addEventListener(MouseEvent.MOUSE_OUT, onMouseOut);
             btnBag.addEventListener(MouseEvent.MOUSE_OVER, onMouseOver);

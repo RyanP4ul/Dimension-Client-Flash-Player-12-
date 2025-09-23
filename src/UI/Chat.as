@@ -17,10 +17,6 @@ import Emojis.emojiDefaultSad;
 import Emojis.emojiDefaultSmile;
 import Emojis.emojiDefaultWink;
 
-import combat.Combat;
-
-import flash.display.MovieClip;
-
 import flash.display.MovieClip;
     import flash.net.SharedObject;
     import flash.utils.Timer;
@@ -40,9 +36,8 @@ import flash.display.MovieClip;
     import flash.net.navigateToURL;
     import flash.net.URLRequest;
     import flash.display.DisplayObjectContainer;
-    import flash.text.*;
 
-    public class Chat 
+public class Chat
     {
 
         public var game:Game;
@@ -325,97 +320,120 @@ import flash.display.MovieClip;
         {
             this.game = game;
 
-            chn.world = {
-                col: "00FFFF",
-                str: "world",
-                typ: "world",
-                tag: "World",
-                rid: 0,
-                act: 1
-            }
-
-            chn.administrator = {
-                col: "FF0000",
-                str: "administrator",
-                typ: "administrator",
-                tag: "Admin",
-                rid: 0,
-                act: 1
-            }
+//            chn.world = {
+//                col: "00FFFF",
+//                str: "world",
+//                typ: "world",
+//                tag: "World",
+//                rid: 0,
+//                act: 1
+//            }
+//
+//            chn.administrator = {
+//                col: "FF0000",
+//                str: "administrator",
+//                typ: "administrator",
+//                tag: "Admin",
+//                rid: 0,
+//                act: 1
+//            }
 
             chn.cur = {};
             chn.lastPublic = {};
             chn.xt = "zm";
-            chn.zone = {};
-            chn.trade = {};
-            chn.moderator = {};
-            chn.warning = {};
-            chn.server = {};
-            chn.event = {};
-            chn.whisper = {};
-            chn.party = {};
-            chn.guild = {};
-            chn.wheel = {};
-            chn.zone.col = "9CCAFD";
-            chn.trade.col = "D2FD94";
-            chn.moderator.col = "FFCC33";
-            chn.warning.col = "FF0000";
-            chn.server.col = "00FFFF";
-            chn.event.col = "00FF00";
-            chn.whisper.col = "FF00FF";
-            chn.party.col = "00CCFF";
-            chn.guild.col = "99FF00";
-            chn.wheel.col = "FFCC33";
-            chn.zone.str = "zone";
-            chn.trade.str = "trade";
-            chn.moderator.str = "moderator";
-            chn.warning.str = "warning";
-            chn.server.str = "server";
-            chn.event.str = "event";
-            chn.whisper.str = "whisper";
-            chn.party.str = "party";
-            chn.guild.str = "guild";
-            chn.wheel.str = "wheel";
-            chn.zone.typ = "message";
-            chn.trade.typ = "message";
-            chn.moderator.typ = "whisper";
-            chn.warning.typ = "server";
-            chn.server.typ = "server";
-            chn.event.typ = "event";
-            chn.whisper.typ = "whisper";
-            chn.party.typ = "message";
-            chn.guild.typ = "message";
-            chn.wheel.typ = "whisper";
-            chn.zone.tag = "";
-            chn.trade.tag = "";
-            chn.moderator.tag = "Moderator";
-            chn.warning.tag = "";
-            chn.server.tag = "";
-            chn.whisper.tag = "Whisper";
-            chn.event.tag = "";
-            chn.party.tag = "Party";
-            chn.guild.tag = "Guild";
-            chn.wheel.tag = "Wheel";
-            chn.zone.rid = 0;
-            chn.trade.rid = 0;
-            chn.moderator.rid = 0;
-            chn.warning.rid = 0;
-            chn.server.rid = 0;
-            chn.event.rid = 0;
-            chn.whisper.rid = 0;
-            chn.party.rid = 32123;
-            chn.guild.rid = 0;
-            chn.wheel.rid = 0;
-            chn.zone.act = 1;
-            chn.trade.act = 0;
-            chn.moderator.act = 1;
-            chn.warning.act = 1;
-            chn.server.act = 1;
-            chn.event.act = 1;
-            chn.whisper.act = 1;
-            chn.party.act = 0;
-            chn.guild.act = 0;
-            chn.wheel.act = 1;
+
+//            trace("Chat class instantiated.");
+//            if (channels.length > 0)
+//            {
+//                for each (var chatChannel:ChatChannel in channels)
+//                {
+//                    trace("CHANNEL => " + chatChannel.Name);
+////                    chn[chatChannel.Name] = {
+////                        col: chatChannel.Color,
+////                        str: chatChannel.Name,
+////                        typ: chatChannel.Type,
+////                        tag: chatChannel.Name,
+////                        rid: chatChannel.Rid,
+////                        act: chatChannel.Act
+////                    };
+//                }
+//            }
+//            else
+//            {
+//                trace("No channels found, requesting...");
+//            }
+
+//            chn.zone = {};
+//            chn.trade = {};
+//            chn.moderator = {};
+//            chn.warning = {};
+//            chn.server = {};
+//            chn.event = {};
+//            chn.whisper = {};
+//            chn.party = {};
+//            chn.guild = {};
+//            chn.wheel = {};
+//            chn.zone.col = "9CCAFD";
+//            chn.trade.col = "D2FD94";
+//            chn.moderator.col = "FFCC33";
+//            chn.warning.col = "FF0000";
+//            chn.server.col = "00FFFF";
+//            chn.event.col = "00FF00";
+//            chn.whisper.col = "FF00FF";
+//            chn.party.col = "00CCFF";
+//            chn.guild.col = "99FF00";
+//            chn.wheel.col = "FFCC33";
+//            chn.zone.str = "zone";
+//            chn.trade.str = "trade";
+//            chn.moderator.str = "moderator";
+//            chn.warning.str = "warning";
+//            chn.server.str = "server";
+//            chn.event.str = "event";
+//            chn.whisper.str = "whisper";
+//            chn.party.str = "party";
+//            chn.guild.str = "guild";
+//            chn.wheel.str = "wheel";
+//            chn.zone.typ = "message";
+//            chn.trade.typ = "message";
+//            chn.moderator.typ = "whisper";
+//            chn.warning.typ = "server";
+//            chn.server.typ = "server";
+//            chn.event.typ = "event";
+//            chn.whisper.typ = "whisper";
+//            chn.party.typ = "message";
+//            chn.guild.typ = "message";
+//            chn.wheel.typ = "whisper";
+//            chn.zone.tag = "";
+//            chn.trade.tag = "";
+//            chn.moderator.tag = "Moderator";
+//            chn.warning.tag = "";
+//            chn.server.tag = "";
+//            chn.whisper.tag = "Whisper";
+//            chn.event.tag = "";
+//            chn.party.tag = "Party";
+//            chn.guild.tag = "Guild";
+//            chn.wheel.tag = "Wheel";
+//            chn.zone.rid = 0;
+//            chn.trade.rid = 0;
+//            chn.moderator.rid = 0;
+//            chn.warning.rid = 0;
+//            chn.server.rid = 0;
+//            chn.event.rid = 0;
+//            chn.whisper.rid = 0;
+//            chn.party.rid = 32123;
+//            chn.guild.rid = 0;
+//            chn.wheel.rid = 0;
+//            chn.zone.act = 1;
+//            chn.trade.act = 0;
+//            chn.moderator.act = 1;
+//            chn.warning.act = 1;
+//            chn.server.act = 1;
+//            chn.event.act = 1;
+//            chn.whisper.act = 1;
+//            chn.party.act = 0;
+//            chn.guild.act = 0;
+//            chn.wheel.act = 1;
+
             chn.cur = chn.zone;
             chn.lastPublic = chn.cur;
 
@@ -1124,6 +1142,9 @@ import flash.display.MovieClip;
 
         public function formatMsgEntry(_arg_1:*):*
         {
+            trace("formatMsgEntry");
+            trace("formatMsgEntry > " + JSON.stringify(chn));
+
             game.ui.mcInterface.te.setSelection(0, 0);
             if (chn.cur != chn.whisper)
             {
@@ -2903,13 +2924,10 @@ import flash.display.MovieClip;
             }
             var _local_8:* = "$({";
             var _local_9:* = "})$";
-            if (((_arg_3.toLowerCase() == game.net.myUserName) && (game.world.myAvatar.objData.intActivationFlag == 1)))
-            {
-                pushMsg("warning", "Confirm your email at http://account.aq.com/ to protect your account and remove this message. ", "SERVER", "", 0);
-            }
+
             if (isChannel(_arg_1))
             {
-                if (_arg_1 == "zone" || _arg_1 == "moderator" || _arg_1 == "administrator")
+                if (_arg_1 == "zone" || _arg_1 == "world" || _arg_1 == "moderator" || _arg_1 == "administrator")
                 {
                     popBubble("u:" + game.strToProperCase(_arg_3), _arg_2);
                 }

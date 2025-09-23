@@ -358,7 +358,16 @@ import flash.text.TextField;
 
         protected function loadPreview(o:Object):void
         {
-            if (o.sType.toLowerCase() != "enhancement")
+            if (o.sType.toLowerCase() == "enhancement")
+            {
+                clearPreview();
+                loadEnhancement(o);
+            }
+            else if (o.sType.toLowerCase() == "rune")
+            {
+                loadBag(o);
+            }
+            else
             {
                 if (curItem != o)
                 {
@@ -394,7 +403,7 @@ import flash.text.TextField;
                             }
                             else
                             {
-                                if (o.sES == "am" || o.sES == "ru")
+                                if (o.sES == "am")
                                 {
                                     loadBag(o, true);
                                 }
@@ -412,10 +421,6 @@ import flash.text.TextField;
                             }
                     }
                 }
-            }
-            else
-            {
-                loadEnhancement(o);
             }
         }
 

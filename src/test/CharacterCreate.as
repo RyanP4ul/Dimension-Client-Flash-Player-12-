@@ -345,7 +345,7 @@ public class CharacterCreate extends AbstractLoader {
     }
 
     private function fetchHairs():void {
-        game.requestAPI(URLRequestMethod.GET, "character/hairs", null, onComplete, null);
+        game.requestAPI(URLRequestMethod.GET, "game/character/hairs", null, onComplete, null);
     }
 
     private function onComplete(event:Event):void {
@@ -437,7 +437,7 @@ public class CharacterCreate extends AbstractLoader {
 
     private function initSkills() : void
     {
-        game.requestAPI(URLRequestMethod.POST, "character/skills", {
+        game.requestAPI(URLRequestMethod.POST, "game/character/skills", {
             itemId: "2,3,4,5"
         }, onSkillComplete, null, false);
     }
@@ -712,7 +712,7 @@ public class CharacterCreate extends AbstractLoader {
                 if (strCharName.text.length < 5) {
                     chat.popBubble("", "Name needs to be longer.", AvatarMC(pAV.pMC));
                 } else {
-                    game.requestAPI(URLRequestMethod.POST, "character/create", {
+                    game.requestAPI(URLRequestMethod.POST, "game/character/create", {
                         userId: game.getLogin().userId,
                         name: Game.trim(strCharName.text),
                         gender: pAV.objData.strGender,

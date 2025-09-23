@@ -98,14 +98,14 @@ public class Quests extends MovieClip {
 
         for (var quest:String in data)
         {
-            if (game.world.myAvatar.objData.quests.indexOf(quest) != -1 || (data[quest].hasOwnProperty("ExpireDate") && game.stringToDate(data[quest].ExpireDate).getTime() - new Date().getTime() <= 0)) continue;
+            if (QuestController.isQuestComplete(data[quest].ChainID, data[quest].Prerequisite) || (data[quest].hasOwnProperty("ExpireDate") && game.stringToDate(data[quest].ExpireDate).getTime() - new Date().getTime() <= 0)) continue;
 
             var listItem:QuestListItem = new QuestListItem();
             listItem.txtLevel.text = data[quest].Level;
             listItem.txtName.text = data[quest].Name;
             listItem.hasRequired = data[quest].Locked != null || QuestController.hasRequiredItem(int(quest)).length > 0;
             listItem.txtName.textColor = listItem.hasRequired ? 0xFF0000 : 0x999999;
-            listItem.mcDailyAndMonthly.visible = ["Daily", "Weekly", "Monthly"].indexOf(data[quest].Field) != -1;
+            listItem.mcDailyAndMonthly.visible = ["Daily", "Weekly", "Monthly"].indexOf(data[quest].Schedule) != -1;
             listItem.select.alpha = 0;
             listItem.mcTimer.visible = data[quest].hasOwnProperty("ExpireDate");
 
@@ -574,7 +574,7 @@ public class Quests extends MovieClip {
                     return;
                 }
 
-                if (QuestController.maximumQuestTurnIns(_currentQuestId) > 1 && QuestController.Data[_currentQuestId].Once == 0)
+                if (QuestController.maximumQuestTurnIns(_currentQuestId) > 1 && !QuestController.Data[_currentQuestId].Repeat)
                 {
                     game.Modal("Turn-in the quest how many times?", function onQtyComplete(o:Object) : void {
                         if (o.accept) game.net.send("questComplete", [_currentQuestId, _choiceId, o.iQty]);

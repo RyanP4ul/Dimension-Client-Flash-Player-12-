@@ -181,13 +181,13 @@ import flash.geom.Point;
                 "h":290
             };
             _local_4.tabStates = MovieClip(fParent).getTabStates();
-            _local_4.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item"];
+            _local_4.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "BattlePet", "House", "Wall Item", "Floor Item"];
             _local_4.filterMap = {
                 "Weapon":["Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand"],
                 "ar":["Class", "Armor"],
                 "he":["Helm"],
                 "ba":["Cape"],
-                "pe":["Pet"],
+                "pe":["Pet", "BattlePet"],
                 "am":["Amulet", "Necklace"],
                 "it":["Note", "Resource", "Item", "Quest Item", "ServerUse", "House", "Wall Item", "Floor Item"],
                 "enh":["Enhancement"]

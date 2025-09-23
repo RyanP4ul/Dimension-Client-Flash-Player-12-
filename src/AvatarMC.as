@@ -102,6 +102,10 @@ public class AvatarMC extends MovieClip {
     public var ox:int;
     public var oy:int;
 
+    private var _lastFrameTime:int = 0;
+    private var _frameTimeThreshold:int = 200; // Minimum ms between frames for performance
+    private var _collisionCheckIndex:int = 0; // For staggered collision checks
+    private var _eventCheckIndex:int = 0; // For staggered event checks
     private var _spFXQueue:Array = [];
 
     public function AvatarMC():void {
@@ -1386,140 +1390,155 @@ public class AvatarMC extends MovieClip {
         }
     }
 
-        private function onEnterFrameWalk(_arg_1:Event):void
+    private function onEnterFrameWalk(_arg_1:Event):void
         {
-            var _local_4:*;
-            var _local_5:*;
-            var _local_6:Boolean;
-            var _local_7:*;
-            var _local_8:*;
-            var _local_9:*;
-            var _local_10:*;
-            var _local_11:int;
-            var _local_12:Boolean;
-            var _local_13:Point;
-            var _local_14:Rectangle;
-            var _local_2:Number = new Date().getTime();
-            var _local_3:Number = ((_local_2 - walkTS) / walkD);
-            if (_local_3 > 1)
+            var prevX:Number;
+            var prevY:Number;
+            var currentTime:Number = new Date().getTime();
+
+            if (currentTime - _lastFrameTime < _frameTimeThreshold) return;
+
+            var elapsed:Number = ((currentTime - walkTS) / walkD);
+            if (elapsed > 1) elapsed = 1;
+
+            if (Point.distance(op, tp) <= 0.5 || !this.mcChar.onMove)
             {
-                _local_3 = 1;
+                this.stopWalking();
+                return;
             }
-            if (((Point.distance(op, tp) > 0.5) && (this.mcChar.onMove)))
+
+            if (checkCollisions(prevX, prevY))
             {
-                _local_4 = this.x;
-                _local_5 = this.y;
-                this.x = Point.interpolate(tp, op, _local_3).x;
-                this.y = Point.interpolate(tp, op, _local_3).y;
-                _local_6 = false;
-                _local_7 = 0;
-                while (_local_7 < STAGE.arrSolid.length)
+                this.x = prevX;
+                this.y = prevY;
+                this.stopWalking();
+                return;
+            }
+
+            prevX = this.x;
+            prevY = this.y;
+
+            this.x = op.x + (tp.x - op.x) * elapsed;
+            this.y = op.y + (tp.y - op.y) * elapsed;
+
+            if (Math.round(prevX) == Math.round(this.x) && Math.round(prevY) == Math.round(this.y) && currentTime > (walkTS + 50))
+            {
+                this.stopWalking();
+                return;
+            }
+
+            if (this.pAV.isMyAvatar)
+            {
+                Game.root.world.mapScrollCheck();
+                checkPadLabels();
+                checkEventsStaggered();
+            }
+        }
+
+    private function checkCollisions(prevX:Number, prevY:Number):Boolean
+    {
+        var hasCollision:Boolean = false;
+        var solidLength:int = STAGE.arrSolid.length;
+
+        // Only check a subset of collisions each frame
+        var checkCount:int = Math.min(5, solidLength); // Check up to 5 solids per frame
+        var startIndex:int = _collisionCheckIndex;
+
+        for (var i:int = 0; i < checkCount; i++)
+        {
+            var index:int = (startIndex + i) % solidLength;
+
+            if (this.shadow.hitTestObject(STAGE.arrSolid[index].shadow))
+            {
+                // Try Y axis first
+                this.y = prevY;
+                var collisionY:Boolean = false;
+
+                for (var j:int = 0; j < checkCount; j++)
                 {
-                    if (this.shadow.hitTestObject(STAGE.arrSolid[_local_7].shadow))
+                    var jIndex:int = (startIndex + j) % solidLength;
+                    if (this.shadow.hitTestObject(STAGE.arrSolid[jIndex].shadow))
                     {
-                        _local_6 = true;
-                        _local_7 = STAGE.arrSolid.length;
+                        collisionY = true;
+                        break;
                     }
-                    _local_7++;
                 }
-                if (_local_6)
+
+                if (collisionY)
                 {
-                    _local_8 = this.y;
-                    this.y = _local_5;
-                    _local_6 = false;
-                    _local_9 = 0;
-                    while (_local_9 < STAGE.arrSolid.length)
+                    // Try X axis
+                    this.x = prevX;
+
+                    for (var k:int = 0; k < checkCount; k++)
                     {
-                        if (this.shadow.hitTestObject(STAGE.arrSolid[_local_9].shadow))
+                        var kIndex:int = (startIndex + k) % solidLength;
+                        if (this.shadow.hitTestObject(STAGE.arrSolid[kIndex].shadow))
                         {
-                            this.y = _local_8;
-                            _local_6 = true;
+                            hasCollision = true;
                             break;
                         }
-                        _local_9++;
-                    }
-                    if (_local_6)
-                    {
-                        this.x = _local_4;
-                        _local_6 = false;
-                        _local_10 = 0;
-                        while (_local_10 < STAGE.arrSolid.length)
-                        {
-                            if (this.shadow.hitTestObject(STAGE.arrSolid[_local_10].shadow))
-                            {
-                                _local_6 = true;
-                                break;
-                            }
-                            _local_10++;
-                        }
-                        if (_local_6)
-                        {
-                            this.x = _local_4;
-                            this.y = _local_5;
-                            this.stopWalking();
-                        }
                     }
                 }
-                if ((((Math.round(_local_4) == Math.round(this.x)) && (Math.round(_local_5) == Math.round(this.y))) && (_local_2 > (walkTS + 50))))
-                {
-                    this.stopWalking();
-                }
-                if (this.pAV.isMyAvatar)
-                {
-                    Game.root.world.mapScrollCheck();
-                    checkPadLabels();
-                    _local_11 = 0;
-                    while (_local_11 < STAGE.arrEvent.length)
-                    {
-                        _local_12 = false;
-                        world = MovieClip(stage.getChildAt(0)).world;
-                        if (world.bPvP)
-                        {
-                            _local_13 = this.shadow.localToGlobal(new Point(0, 0));
-                            _local_14 = STAGE.arrEvent[_local_11].shadow.getBounds(stage);
-                            if (_local_14.containsPoint(_local_13))
-                            {
-                                _local_12 = true;
-                            }
-                        }
-                        else
-                        {
-                            if (this.shadow.hitTestObject(STAGE.arrEvent[_local_11].shadow))
-                            {
-                                _local_12 = true;
-                            }
-                        }
-                        if (_local_12)
-                        {
-                            if (((!(STAGE.arrEvent[_local_11]._entered)) && (MovieClip(STAGE.arrEvent[_local_11]).isEvent)))
-                            {
-                                STAGE.arrEvent[_local_11]._entered = true;
-                                if (this == MovieClip(parent.parent).myAvatar.pMC)
-                                {
-                                    STAGE.arrEvent[_local_11].dispatchEvent(new Event("enter"));
-                                }
-                            }
-                        }
-//                        else
-//                        {
-//                            if (STAGE.arrEvent[_local_11]._entered)
-//                            {
-//                                if (MovieClip(STAGE.arrEvent[_local_11]).isEvent && this == MovieClip(parent.parent).myAvatar.pMC)
-//                                {
-//                                    STAGE.arrEvent[_local_11].dispatchEvent(new Event("leave"));
-//                                }
-//                                STAGE.arrEvent[_local_11]._entered = false;
-//                            }
-//                        }
-                        _local_11++;
-                    }
-                }
+
+                if (hasCollision) break;
+            }
+        }
+
+        _collisionCheckIndex = (_collisionCheckIndex + checkCount) % solidLength;
+
+        return hasCollision;
+    }
+
+    private function checkEventsStaggered():void
+    {
+        var eventLength:int = STAGE.arrEvent.length;
+        if (eventLength == 0) return;
+
+        // Check 3 events per frame (adjust as needed)
+        var checkCount:int = Math.min(3, eventLength);
+        var startIndex:int = _eventCheckIndex;
+
+        for (var i:int = 0; i < checkCount; i++)
+        {
+            var index:int = (startIndex + i) % eventLength;
+            var eventObj:* = STAGE.arrEvent[index];
+            var isInside:Boolean = false;
+
+            if (world.bPvP)
+            {
+                var point:Point = this.shadow.localToGlobal(new Point(0, 0));
+                var bounds:Rectangle = eventObj.shadow.getBounds(stage);
+                isInside = bounds.containsPoint(point);
             }
             else
             {
-                this.stopWalking();
+                isInside = this.shadow.hitTestObject(eventObj.shadow);
+            }
+
+            if (isInside)
+            {
+                if (!eventObj._entered && MovieClip(eventObj).isEvent)
+                {
+                    eventObj._entered = true;
+                    if (this == MovieClip(parent.parent).myAvatar.pMC)
+                    {
+                        eventObj.dispatchEvent(new Event("enter"));
+                    }
+                }
+            }
+            else if (eventObj._entered)
+            {
+                if (MovieClip(eventObj).isEvent && this == MovieClip(parent.parent).myAvatar.pMC)
+                {
+                    eventObj.dispatchEvent(new Event("leave"));
+                }
+                eventObj._entered = false;
             }
         }
+
+        // Update index for next frame
+        _eventCheckIndex = (_eventCheckIndex + checkCount) % eventLength;
+    }
 
     public function simulateTo(_arg_1:int, _arg_2:int, _arg_3:int):Point {
         STAGE = MovieClip(parent.parent);

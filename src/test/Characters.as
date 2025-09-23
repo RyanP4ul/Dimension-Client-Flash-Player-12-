@@ -87,7 +87,7 @@ public class Characters extends MovieClip {
     }
 
     public function initCharacters():void {
-		try {
+//		try {
 		
 		removeAllCharacters();
 
@@ -118,8 +118,8 @@ public class Characters extends MovieClip {
 
         positionHighlighter();
 		
-		} catch(e:Error) {
-		}
+//		} catch(e:Error) {
+//		}
     }
 
     private function setAvatar(obj:Object):void {
@@ -340,7 +340,7 @@ public class Characters extends MovieClip {
                 askPassword.visible = false;
                 break;
             case "btnConfirm":
-                game.requestAPI(URLRequestMethod.POST ,"character/password", {
+                game.requestAPI(URLRequestMethod.POST ,"game/character/password", {
                     charId: characters[selected].charId,
                     pass: askPassword.txtPassword.text.toString()
                 }, onPasswordComplete, null, false);
@@ -361,7 +361,7 @@ public class Characters extends MovieClip {
                     SetSettings();
                     break;
                 case "Delete":
-                    game.requestAPI(URLRequestMethod.POST, "character/delete", {
+                    game.requestAPI(URLRequestMethod.POST, "game/character/delete", {
                         charId: characters[selected].charId
                     }, onDeleteComplete, null, false);
                     break;

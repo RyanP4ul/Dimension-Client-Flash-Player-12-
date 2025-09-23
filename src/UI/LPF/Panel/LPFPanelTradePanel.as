@@ -100,13 +100,13 @@ public class LPFPanelTradePanel extends LPFPanel  {
             "h":370
         };
         frame.tabStates = MovieClip(fParent).getTabStates();
-        frame.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item"];
+        frame.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item", "BattlePet"];
         frame.filterMap = {
             "Weapon":["Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand"],
             "ar":["Class", "Armor"],
             "he":["Helm"],
             "ba":["Cape"],
-            "pe":["Pet"],
+            "pe":["Pet", "BattlePet"],
             "am":["Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring"],
             "it":["Note", "Resource", "Item", "Quest Item", "ServerUse"],
             "enh":["Enhancement"],
@@ -193,13 +193,13 @@ public class LPFPanelTradePanel extends LPFPanel  {
             "h":281.2
         };
         frame.tabStates = MovieClip(fParent).getTabStates();
-        frame.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item"];
+        frame.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "BattlePet", "House", "Wall Item", "Floor Item"];
         frame.filterMap = {
             "Weapon":["Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand"],
             "ar":["Class", "Armor"],
             "he":["Helm"],
             "ba":["Cape"],
-            "pe":["Pet"],
+            "pe":["Pet", "BattlePet"],
             "am":["Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring"],
             "it":["Note", "Resource", "Item", "Quest Item", "ServerUse"],
             "enh":["Enhancement"],

@@ -24,6 +24,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
     public var iRty:int = 1;
     public var iSel:Object;
     public var eSel:Object;
+    public var rSel:Object;
     public var shopinfo:Object;
     public var itemsInv:Array;
     public var itemsShop:Array;
@@ -123,7 +124,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
         previewPanel = addPanel(_local_4);
         previewPanel.visible = false;
         previewPanel.addEventListener(Event.ENTER_FRAME, previewPanelEF, false, 0, true);
-		
+
         _local_4 = {};
         _local_4.panel = new LPFPanelListShopInvA();
         _local_3 = ((sMode.toLowerCase().indexOf("shop") > -1) ? game.world.shopinfo.sName : "Inventory");
@@ -186,6 +187,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
         var eSelPrev:Object = eSel;
         var forceO:Object;
         var forceP:Object;
+
         if (((!(iSel == null)) && (!(eSel == null))))
         {
             previewPanel.bg.tTitle.text = "Create";
@@ -194,6 +196,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
         {
             previewPanel.bg.tTitle.text = "Preview";
         }
+
         if (o.eventType == "sModeSet")
         {
             if (sMode != o.sModeBroadcast)
@@ -213,17 +216,6 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                 previewPanelB.fHide();
             }
         }
-        if (o.eventType == "listSocketItem")
-        {
-            if (!game.isGreedyModalInStack())
-            {
-                trace("LIST SUCKIT ITEM :>");
-            }
-            else
-            {
-                cancelBroadcast = true;
-            }
-        }
         if (o.eventType == "listItemASel")
         {
             if (!game.isGreedyModalInStack())
@@ -237,7 +229,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                 if (previewPanel.bg.bg.filters.length > 0) previewPanel.bg.bg.filters = [];
                 if (previewPanelB.bg.bg.filters.length > 0) previewPanelB.bg.bg.filters = [];
 
-                if (aSel == "enhancement")
+                if (aSel == "enhancement" || aSel == "rune")
                 {
                     eSel = o.fData;
                 }
@@ -245,7 +237,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                 {
                     iSel = o.fData;
                 }
-                if (o.fData.sType.toLowerCase() == "enhancement")
+                if (o.fData.sType.toLowerCase() == "enhancement" || o.fData.sType.toLowerCase() == "rune")
                 {
                     o.tabStates = getTabStates(o.fData);
                 }
@@ -291,7 +283,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                 }
                 if (((iSel == null) && (!(eSel == null))))
                 {
-                    splitPanel.bg.tTitle.text = "Select Item to Enhance";
+                    splitPanel.bg.tTitle.text = eSel.sType.toLowerCase() == "rune" ? "Select Item to Add Rune" : "Select Item to Enhance";
                 }
             }
             else
@@ -306,7 +298,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                 p = game.copyObj(o);
                 p.eventType = "listItemBSolo";
 
-                if (o.fData.sType.toLowerCase() == "enhancement")
+                if (o.fData.sType.toLowerCase() == "enhancement" || o.fData.sType.toLowerCase() == "rune")
                 {
                     p.fData = {
                         "iSel":null,
@@ -320,7 +312,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                         "eSel":null
                     };
                 }
-                if (bSel == "enhancement")
+                if (bSel == "enhancement" || bSel == "rune")
                 {
                     eSel = null;
                 }
@@ -332,7 +324,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                     }
                 }
                 bSel = o.fData.sType.toLowerCase();
-                if (bSel == "enhancement")
+                if (bSel == "enhancement" || bSel == "rune")
                 {
                     eSel = o.fData;
                 }
@@ -394,6 +386,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                             "h":-1
                         };
                         forceO.buttonNewEventType = "equipItem";
+
                         forceP = {};
                         forceP.eventType = "previewButton2Update";
                         forceP.fData = {};
@@ -485,6 +478,35 @@ public class LPFLayoutInvShopEnh extends LPFLayout
             {
                 cancelBroadcast = true;
             }
+        }
+        if (o.eventType == "runeItem")
+        {
+            if (!game.isGreedyModalInStack())
+            {
+                if (iSel != null && eSel != null)
+                {
+                    game.net.send("addRuneItem", [iSel.ItemID, eSel.ItemID])
+
+//                    trace("iSel > RUNE ITEM: " + JSON.stringify(iSel));
+//                    trace("eSel > RUNE ITEM: " + JSON.stringify(eSel));
+//
+//                    if (iSel.iRune < 1)
+//                    {
+//                        game.Modal("This item cannot hold any runes.", null, {}, "red,medium", "mono");
+//                    }
+//
+//                    trace("RUNE ITEM!");
+                }
+                else
+                {
+                    game.Modal("Error add rune item!", null, {}, "red,medium", "mono");
+                }
+            }
+            else
+            {
+                cancelBroadcast = true;
+            }
+//            game.net.send("addRuneItem", [iSel.ItemID, eSel.ItemID]);
         }
         if (o.eventType == "buyItem")
         {
@@ -593,11 +615,9 @@ public class LPFLayoutInvShopEnh extends LPFLayout
 
     private function updatePreviewButtons(_arg_1:Object=null, _arg_2:Object=null):void
     {
-        trace("UPDATE PREVIEW BUTTON");
-
         var _local_3:Object = {};
         var _local_4:Object = {};
-        if (((!(_arg_1 == null)) && (!(_arg_2 == null))))
+        if (_arg_1 != null && _arg_2 != null)
         {
             _local_3 = _arg_1;
             _local_4 = _arg_2;
@@ -626,6 +646,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                 "h":-1
             };
             _local_4.buttonNewEventType = "";
+
             if (sMode == "inventory")
             {
                 if (((iSel == null) && (eSel == null)))
@@ -639,21 +660,32 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                 {
                     if (((!(iSel == null)) && (!(eSel == null))))
                     {
-                        _local_3.fData.sText = "Enhance!";
-                        _local_3.buttonNewEventType = "enhanceItem";
-                        _local_3.sMode = "red";
-                        if (iSel.bEquip == 1)
+                        if (eSel.sType.toLowerCase() == "rune")
                         {
-                            _local_4.fData.sText = "Unequip";
-                            _local_4.buttonNewEventType = "unequipItem";
+                            _local_3.fData.sText = "Add Rune!";
+                            _local_3.buttonNewEventType = "runeItem";
+                            _local_3.sMode = "red";
+                            _local_4.fData.sText = "";
+                            _local_4.buttonNewEventType = "";
                         }
                         else
                         {
-                            _local_4.fData.sText = "Equip";
-                            _local_4.buttonNewEventType = "equipItem";
-                            if (_local_3.sMode != "red")
+                            _local_3.fData.sText = "Enhance!";
+                            _local_3.buttonNewEventType = "enhanceItem";
+                            _local_3.sMode = "red";
+                            if (iSel.bEquip == 1)
                             {
-                                _local_4.sMode = "red";
+                                _local_4.fData.sText = "Unequip";
+                                _local_4.buttonNewEventType = "unequipItem";
+                            }
+                            else
+                            {
+                                _local_4.fData.sText = "Equip";
+                                _local_4.buttonNewEventType = "equipItem";
+                                if (_local_3.sMode != "red")
+                                {
+                                    _local_4.sMode = "red";
+                                }
                             }
                         }
                     }
@@ -663,26 +695,41 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                         {
                             _local_3.fData.sText = "";
                             _local_3.buttonNewEventType = "";
-                            _local_4.fData.sText = "Apply Now";
+                            _local_4.fData.sText = eSel.sType.toLowerCase() == "rune" ? "Apply Rune!" : "Apply Enh!";
                             _local_4.buttonNewEventType = "showItemListB";
                             _local_4.sMode = "red";
                         }
-                        else
+                        else if (iSel != null)
                         {
-                            if (iSel != null)
+                            if (["Weapon", "he", "ar", "ba", "ru"].indexOf(iSel.sES) > -1)
                             {
-                                if (["Weapon", "he", "ar", "ba"].indexOf(iSel.sES) > -1)
+                                _local_3.fData.sText = "Enhance!";
+                                _local_3.buttonNewEventType = "showItemListB";
+                                if (!("EnhLvl" in iSel))
                                 {
-                                    _local_3.fData.sText = "Enhance!";
-                                    _local_3.buttonNewEventType = "showItemListB";
-                                    if (!("EnhLvl" in iSel))
-                                    {
-                                        _local_3.sMode = "red";
-                                    }
-                                    else
-                                    {
-                                        _local_4.sMode = "red";
-                                    }
+                                    _local_3.sMode = "red";
+                                }
+                                else
+                                {
+                                    _local_4.sMode = "red";
+                                }
+                                if (iSel.bEquip == 1)
+                                {
+                                    _local_4.fData.sText = "Unequip";
+                                    _local_4.buttonNewEventType = "unequipItem";
+                                }
+                                else
+                                {
+                                    _local_4.fData.sText = "Equip";
+                                    _local_4.buttonNewEventType = "equipItem";
+                                }
+                            }
+                            else
+                            {
+                                trace(((("iSel.sType: " + iSel.sType) + " iSel.sLink: ") + iSel.sLink));
+                                if (((((iSel.sType.toLowerCase() == "pet") || ((((iSel.sType.toLowerCase() == "item") && (!(String(iSel.sLink).toLowerCase() == ""))) && (!(String(iSel.sLink).toLowerCase() == " "))) && (!(String(iSel.sLink).toLowerCase() == "none")))) || (iSel.sES == "co")) || (iSel.sES == "am")))
+                                {
+                                    _local_4.sMode = "red";
                                     if (iSel.bEquip == 1)
                                     {
                                         _local_4.fData.sText = "Unequip";
@@ -694,35 +741,18 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                                         _local_4.buttonNewEventType = "equipItem";
                                     }
                                 }
-                                else
+                                if (((iSel.sType.toLowerCase() == "serveruse") || (iSel.sType.toLowerCase() == "clientuse")))
                                 {
-                                    trace(((("iSel.sType: " + iSel.sType) + " iSel.sLink: ") + iSel.sLink));
-                                    if (((((iSel.sType.toLowerCase() == "pet") || ((((iSel.sType.toLowerCase() == "item") && (!(String(iSel.sLink).toLowerCase() == ""))) && (!(String(iSel.sLink).toLowerCase() == " "))) && (!(String(iSel.sLink).toLowerCase() == "none")))) || (iSel.sES == "co")) || (iSel.sES == "am")))
-                                    {
-                                        _local_4.sMode = "red";
-                                        if (iSel.bEquip == 1)
-                                        {
-                                            _local_4.fData.sText = "Unequip";
-                                            _local_4.buttonNewEventType = "unequipItem";
-                                        }
-                                        else
-                                        {
-                                            _local_4.fData.sText = "Equip";
-                                            _local_4.buttonNewEventType = "equipItem";
-                                        }
-                                    }
-                                    if (((iSel.sType.toLowerCase() == "serveruse") || (iSel.sType.toLowerCase() == "clientuse")))
-                                    {
-                                        _local_4.sMode = "red";
-                                        _local_4.fData.sText = "Use";
-                                        _local_4.buttonNewEventType = "useItem";
-                                    }
+                                    _local_4.sMode = "red";
+                                    _local_4.fData.sText = "Use";
+                                    _local_4.buttonNewEventType = "useItem";
                                 }
                             }
                         }
                     }
                 }
             }
+
             if (sMode == "shopBuy")
             {
                 if (((iSel == null) && (eSel == null)))

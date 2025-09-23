@@ -315,7 +315,7 @@ public class Game extends MovieClip {
             }
         }
 
-        var request:URLRequest = new URLRequest(serverBaseURL + "api/game/" + api);
+        var request:URLRequest = new URLRequest(serverBaseURL + "api/" + api);
 
         if (headers) request.requestHeaders = [new URLRequestHeader("ccid", world.myAvatar.objData.CharID), new URLRequestHeader("token", loginInfo.strToken)];
         if (parameters != null) request.data = variables;
@@ -333,6 +333,8 @@ public class Game extends MovieClip {
             gameFile:Boolean = true,
             isLoader:Boolean = false
     ):void {
+        if (file == null) return;
+
         var request:URLRequest = new URLRequest(gameFile ? getFilePath(file) : serverBaseURL + file);
         var urlLoader:URLLoader = new URLLoader();
         urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
@@ -605,10 +607,6 @@ public class Game extends MovieClip {
                         if (((val == 1) && (intState0 == 0))) {
                             avt.pMC.gotoAndStop("Idle");
                             avt.pMC.scale(world.SCALE);
-                        }
-                        if (((val == 1) && (intState0 == 2))) {
-                            if (("eventTrigger" in MovieClip(world.map))) {
-                            }
                         }
                     }
                     if (avt.objData != null) {
@@ -930,7 +928,7 @@ public class Game extends MovieClip {
 
         if (!cAvt.hasOwnProperty("lastAnimTime")) cAvt.lastAnimTime = 0;
 
-        if (getTimer() - cAvt.lastAnimTime < 100) return;
+        if (getTimer() - cAvt.lastAnimTime < 300) return;
 
 
         cAvt.lastAnimTime = getTimer();
@@ -1664,16 +1662,16 @@ public class Game extends MovieClip {
         {
             for each (var item:Object in obj.irq)
             {
-                if (world.myAvatar.objData.quests.indexOf(item.QuestID) == -1)
+                if (world.myAvatar.objData.quests.hasOwnProperty(item.ChainID))
                 {
-                    strItemInfo += "<font size='11' color='#CC0000'>Requires completion of quest \"" + item.Name + '".</font><br>';
+                    var prerequisite:Number = Number(world.myAvatar.objData.quests[item.ChainID]);
+
+                    if (prerequisite < item.Prerequisite) strItemInfo += "<font size='11' color='#CC0000'>Requires completion of quest \"" + item.Name + '".</font><br>';
                 }
             }
         }
 
-        var meta:String = String(obj.sMeta).toLowerCase();
-
-        if (meta.length > 0)
+        if ("reqStats" in obj)
         {
             var sta:Object = world.uoTree[net.myUserName.toLowerCase()];
 
@@ -1686,22 +1684,69 @@ public class Game extends MovieClip {
                         sta.tempSta.innate[stat] + sta.sta["$" + stat];
             }
 
-            for each (var stats:String in meta.split(','))
-            {
-                var parts:Array = stats.split(':');
-                var stat:String = parts[0];
-                var value:int = int(parts[1]);
-
-                if (statsController.statMap.hasOwnProperty(stat))
-                {
-                    var totalStat:int = getStatValue(statsController.statMap[stat]);
-                    if (totalStat < value)
-                    {
-                        strItemInfo += "<font size='11' color='#CC0000'>Requires " + stat.charAt(0).toUpperCase() + stat.slice(1) + " \"" + value + "\".</font><br>";
-                    }
-                }
+            if (obj.reqStats.Strength > 0) {
+                var totalStr: int = getStatValue("STR");
+                if (totalStr < obj.reqStats.Strength) strItemInfo += "<font size='11' color='#CC0000'>Requires Strength \"" + obj.reqStats.Strength + "\".</font><br>";
             }
+
+            if (obj.reqStats.Intellect > 0) {
+                var totalInt: int = getStatValue("INT");
+                if (totalInt < obj.reqStats.Intellect) strItemInfo += "<font size='11' color='#CC0000'>Requires Intellect \"" + obj.reqStats.Intellect + "\".</font><br>";
+            }
+
+            if (obj.reqStats.Dexterity > 0) {
+                var totalDex: int = getStatValue("DEX");
+                if (totalDex < obj.reqStats.Dexterity) strItemInfo += "<font size='11' color='#CC0000'>Requires Dexterity \"" + obj.reqStats.Dexterity + "\".</font><br>";
+            }
+
+            if (obj.reqStats.Endurance > 0) {
+                var totalEnd: int = getStatValue("END");
+                if (totalEnd < obj.reqStats.Endurance) strItemInfo += "<font size='11' color='#CC0000'>Requires Endurance \"" + obj.reqStats.Dexterity + "\".</font><br>";
+            }
+
+            if (obj.reqStats.Wisdom > 0) {
+                var totalWis: int =  getStatValue("WIS");
+                if (totalWis < obj.reqStats.Endurance) strItemInfo += "<font size='11' color='#CC0000'>Requires Wisdom \"" + obj.reqStats.Dexterity + "\".</font><br>";
+            }
+
+            if (obj.reqStats.Luck > 0) {
+                var totalLck: int = getStatValue("LCK");
+                if (totalLck < obj.reqStats.Luck) strItemInfo += "<font size='11' color='#CC0000'>Requires Luck \"" + obj.reqStats.Dexterity + "\".</font><br>";
+            }
+
         }
+
+//        var meta:String = String(obj.sMeta).toLowerCase();
+//
+//        if (meta.length > 0)
+//        {
+//            var sta:Object = world.uoTree[net.myUserName.toLowerCase()];
+//
+//            function getStatValue(stat:String):int
+//            {
+//                return (sta.tempSta.hasOwnProperty("ba") ? sta.tempSta.ba[stat] : 0) +
+//                        (sta.tempSta.hasOwnProperty("ar") ? sta.tempSta.ar[stat] : 0) +
+//                        (sta.tempSta.hasOwnProperty("Weapon") ? sta.tempSta.Weapon[stat] : 0) +
+//                        (sta.tempSta.hasOwnProperty("he") ? sta.tempSta.he[stat] : 0) +
+//                        sta.tempSta.innate[stat] + sta.sta["$" + stat];
+//            }
+//
+//            for each (var stats:String in meta.split(','))
+//            {
+//                var parts:Array = stats.split(':');
+//                var stat:String = parts[0];
+//                var value:int = int(parts[1]);
+//
+//                if (statsController.statMap.hasOwnProperty(stat))
+//                {
+//                    var totalStat:int = getStatValue(statsController.statMap[stat]);
+//                    if (totalStat < value)
+//                    {
+//                        strItemInfo += "<font size='11' color='#CC0000'>Requires " + stat.charAt(0).toUpperCase() + stat.slice(1) + " \"" + value + "\".</font><br>";
+//                    }
+//                }
+//            }
+//        }
 
         if (((obj.iQSindex >= 0) && (world.getQuestValue(obj.iQSindex) < int(obj.iQSvalue)))) {
             strItemInfo = (strItemInfo + (("<font size='11' color='#CC0000'>Requires completion of quest \"" + obj.sQuest) + '".</font><br>'));
@@ -1733,9 +1778,11 @@ public class Game extends MovieClip {
 
         if (obj.iStk > 1) strItemInfo = strItemInfo + " - " + (obj.hasOwnProperty("iQty") ? obj.iQty : 0) + "/" + obj.iStk;
 
-        if (((((((obj.sES == "Weapon") || (obj.sES == "co")) || (obj.sES == "he")) || (obj.sES == "ba")) || (obj.sES == "pe")) || (obj.sES == "am"))) {
+        if (obj.sES == "Weapon" || obj.sES == "co" || obj.sES == "he" || obj.sES == "ba" || obj.sES == "pe" || obj.sES == "am") {
             if (obj.sType.toLowerCase() != "enhancement") {
-                strItemInfo = strItemInfo + "<br><font color='#" + (world.rarity[obj.iRty] != null ? String(world.rarity[obj.iRty]).replace("0x", "") : "FFFFFF") + "'>" + getRarityString(obj.iRty) + " Rarity";
+                var rarity:Object = world.rarity[obj.iRty];
+
+                strItemInfo += rarity != null ? "<br><font color='" + String(rarity.Color).replace("0x", "#") + "'>" + rarity.Name + " Rarity" : "<br><font color='#FFFFFF'> Rarity";
             }
         }
         if (obj.sType.toLowerCase() != "enhancement") {
@@ -2272,104 +2319,6 @@ public class Game extends MovieClip {
         }
     }
 
-    public function getRarityString(_arg_1:int):String {
-        var _local_3:Object;
-        var _local_2:Array = [{
-            "val": 10,
-            "sName": "Unknown"
-        }, {
-            "val": 11,
-            "sName": "Common"
-        }, {
-            "val": 12,
-            "sName": "Weird"
-        }, {
-            "val": 13,
-            "sName": "Awesome"
-        }, {
-            "val": 14,
-            "sName": "1% Drop"
-        }, {
-            "val": 15,
-            "sName": "5% Drop"
-        }, {
-            "val": 16,
-            "sName": "Boss Drop"
-        }, {
-            "val": 17,
-            "sName": "Secret"
-        }, {
-            "val": 18,
-            "sName": "Junk"
-        }, {
-            "val": 19,
-            "sName": "Impossible"
-        }, {
-            "val": 20,
-            "sName": "Artifact"
-        }, {
-            "val": 21,
-            "sName": "Limited Time Drop"
-        }, {
-            "val": 22,
-            "sName": "Dumb"
-        }, {
-            "val": 23,
-            "sName": "Crazy"
-        }, {
-            "val": 24,
-            "sName": "Expensive"
-        }, {
-            "val": 30,
-            "sName": "Rare"
-        }, {
-            "val": 35,
-            "sName": "Epic"
-        }, {
-            "val": 40,
-            "sName": "Import Item"
-        }, {
-            "val": 50,
-            "sName": "Seasonal Item"
-        }, {
-            "val": 55,
-            "sName": "Seasonal Rare"
-        }, {
-            "val": 60,
-            "sName": "Event Item"
-        }, {
-            "val": 65,
-            "sName": "Event Rare"
-        }, {
-            "val": 70,
-            "sName": "Limited Rare"
-        }, {
-            "val": 75,
-            "sName": "Collector's Rare"
-        }, {
-            "val": 80,
-            "sName": "Promotional Item"
-        }, {
-            "val": 90,
-            "sName": "Ultra Rare"
-        }, {
-            "val": 95,
-            "sName": "Super Mega Ultra Rare"
-        }, {
-            "val": 100,
-            "sName": "Legendary Item"
-        }];
-        var _local_4:int = _local_2.length - 1;
-        while (_local_4 > -1) {
-            _local_3 = _local_2[_local_4];
-            if (_arg_1 >= _local_3.val) {
-                return _local_3.sName;
-            }
-            _local_4--;
-        }
-        return "Common";
-    }
-
     public function toggleItemEquip(o:Object):Boolean {
         var isValid:Boolean = false;
 
@@ -2583,7 +2532,8 @@ public class Game extends MovieClip {
 
     public function getFilePath(file:String):String {
 //        return serverBaseURL + "game/read/swf?path=gamefiles/" + file + "&deviceType= " + params.DeviceType;
-        return serverBaseURL + "game/swf?path=" + file + "&deviceType=" + params.DeviceType;
+//        return serverBaseURL + "game/swf?path=" + file + "&deviceType=" + params.DeviceType;
+		return serverBaseURL + "gamefiles/" + file;
     }
 
     public function initWorld():void {
@@ -2815,7 +2765,6 @@ public class Game extends MovieClip {
         ui.mcFPS.visible = preference.data.bFps;
         ui.mcFPS.mouseEnabled = false;
         ui.mcFPS.mouseChildren = false;
-        ui.mcRes.visible = false;
         ui.mcPopup.visible = false;
         ui.mcPortrait.visible = false;
         ui.mcPopup.visible = false;
@@ -2956,7 +2905,7 @@ public class Game extends MovieClip {
         loginInfo.strUsername = strUsername;
         loginInfo.strToken = strPassword;
 
-        requestAPI(URLRequestMethod.POST,"login", {
+        requestAPI(URLRequestMethod.POST,"game/login", {
             "user":strUsername,
             "pass":strPassword
         }, onLoginComplete, onLoginError, false);
@@ -2998,6 +2947,41 @@ public class Game extends MovieClip {
             mcConnDetail.showConn("Error login!", true);
             trace("caught LoginComplete error => " + e.message);
         }
+    }
+
+    public function loadChatChannels() : void {
+        mcConnDetail.showConn("Loading chat channels...");
+        requestAPI(URLRequestMethod.GET,"data/chat/channels", {}, onChatChannelsComplete, onChatChannelsError, false);
+    }
+
+    public function onChatChannelsComplete(event:Event):void {
+        try {
+            var response:Object = JSON.parse(event.target.data);
+
+            for each (var o:Object in response.channels) {
+                chatF.chn[o.Name] = {
+                    col: o.Color,
+                    str: o.Name,
+                    typ: o.Type,
+                    tag: o.Tag,
+                    rid: o.Rid,
+                    act: o.Act
+                };
+            }
+
+            chatF.chn.cur = chatF.chn.zone;
+            chatF.chn.lastPublic = chatF.chn.cur;
+
+            resumeOnLoginResponse();
+        } catch (e:Error) {
+            mcConnDetail.showConn("Error login!", true);
+            trace("caught ChatChannelsComplete error => " + e.message);
+        }
+    }
+
+    public function onChatChannelsError(event:IOErrorEvent):void {
+        trace("Chat Channels Failed!" + event);
+        mcConnDetail.showConn("Error Chat Channels!", true);
     }
 
     public function resumeOnLoginResponse():void {
@@ -3630,7 +3614,7 @@ public class Game extends MovieClip {
         var _local_2:*;
         _local_1 = 0;
         _local_2 = 1;
-        while (_local_2 < 10) {
+        while (_local_2 < 30) {
             _local_1 = Math.pow(_local_2 + 1, 3) * 100;
             if (_local_2 > 1) {
                 arrRanks.push(_local_1 + arrRanks[(_local_2 - 1)]);
@@ -4588,10 +4572,12 @@ public class Game extends MovieClip {
         if (world.dropMenu == null || world.dropMenu.length < 1)
         {
             ui.mcInterface.mcMenu.tLootCount.visible = false;
+			ui.mcInterface.mcMenu.mcLootContainer.visible = false;
         }
         else
         {
             ui.mcInterface.mcMenu.tLootCount.visible = true;
+			ui.mcInterface.mcMenu.mcLootContainer.visible = true;
             ui.mcInterface.mcMenu.tLootCount.text = world.dropMenu.length;
         }
     }

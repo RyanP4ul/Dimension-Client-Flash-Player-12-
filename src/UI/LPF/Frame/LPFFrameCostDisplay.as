@@ -5,19 +5,22 @@
 
 package UI.LPF.Frame
 {
-    import flash.display.MovieClip;
+import flash.display.DisplayObject;
+import flash.display.MovieClip;
     import flash.events.MouseEvent;
     import flash.text.*;
 
     public class LPFFrameCostDisplay extends LPFFrame 
     {
 
-        public var mcCopper:MovieClip;
-        public var mcSilver:MovieClip;
-        public var mcGold:MovieClip;
         public var bg:MovieClip;
         private var game:Game;
         private var r:Object;
+
+        private var padding:int = 8;
+        private var gap:int = 4;
+        private var spacing:int = 8;
+        private var maxWidth:int = 250;
 
         public function LPFFrameCostDisplay():void
         {
@@ -41,25 +44,10 @@ package UI.LPF.Frame
             fDraw();
             positionBy(r);
             getLayout().registerForEvents(this, eventTypes);
-            mcCopper.addEventListener(MouseEvent.MOUSE_OVER, onCopperTTOver, false, 0, true);
-            mcCopper.addEventListener(MouseEvent.MOUSE_OUT, onTTOut, false, 0, true);
-            mcSilver.addEventListener(MouseEvent.MOUSE_OVER, onSilverTTOver, false, 0, true);
-            mcSilver.addEventListener(MouseEvent.MOUSE_OUT, onTTOut, false, 0, true);
-            mcGold.addEventListener(MouseEvent.MOUSE_OVER, onGoldTTOver, false, 0, true);
-            mcGold.addEventListener(MouseEvent.MOUSE_OUT, onTTOut, false, 0, true);
-            mcCopper.hit.alpha = 0;
-            mcSilver.hit.alpha = 0;
-            mcGold.hit.alpha = 0;
         }
 
         override public function fClose():void
         {
-            mcCopper.removeEventListener(MouseEvent.MOUSE_OVER, onCopperTTOver);
-            mcCopper.removeEventListener(MouseEvent.MOUSE_OUT, onTTOut);
-            mcSilver.removeEventListener(MouseEvent.MOUSE_OVER, onSilverTTOver);
-            mcSilver.removeEventListener(MouseEvent.MOUSE_OUT, onTTOut);
-            mcGold.removeEventListener(MouseEvent.MOUSE_OVER, onGoldTTOver);
-            mcGold.removeEventListener(MouseEvent.MOUSE_OUT, onTTOut);
             getLayout().unregisterFrame(this);
             if (parent != null)
             {
@@ -67,147 +55,118 @@ package UI.LPF.Frame
             }
         }
 
-        private function get qty_parent():*
+        private function get qty_parent() : Object
         {
             return ((MovieClip(MovieClip(parent).parent).iQty) ? MovieClip(MovieClip(parent).parent) : MovieClip(parent));
         }
 
-        private function fDraw():void
-        {
-            visible = false;
-            var _local_1:* = (getLayout().sMode == "shopSell");
-            var _local_2:Number = 0;
-            var _local_3:* = "#FFFFFF";
-            var _local_4:int;
-
-            if (((getLayout().sMode.indexOf("shop") > -1) && (!(fData == null))))
-            {
-                visible = true;
-                mcCopper.visible = false;
-                mcSilver.visible = false;
-                mcGold.visible = false;
-                mcCopper.x = 0;
-                mcSilver.x = 0;
-                mcGold.x = 0;
-                mcCopper.ti.text = "";
-                mcSilver.ti.text = "";
-                mcGold.ti.text = ""
-
-                _local_2 = Number(fData.iCost);
-
-                if ((((!(qty_parent.eSel == null)) && (getLayout().sMode == "shopBuy")) && (getLayout().hasOwnProperty("splitPanel"))))
-                {
-                    if (getLayout().splitPanel.visible)
-                    {
-                        _local_4 = getLayout().splitPanel.frames[2].mc.getSelected();
-                        if (_local_4 > 1)
-                        {
-                            _local_2 = (_local_2 * _local_4);
-                        }
-                    }
-                }
-                else
-                {
-                    if (((((getLayout().sMode.indexOf("shop") > -1) && (qty_parent)) && (hasSlider())) && (qty_parent.iQty > 1)))
-                    {
-                        if (fData.sES != "ar")
-                        {
-                            _local_2 = (_local_2 * qty_parent.iQty);
-                        }
-                    }
-                }
-
-                if (_local_2 > 0)
-                {
-                    if ("bGold" in fData && fData.bGold == 1)
-                    {
-                        if (_local_1)
-                        {
-                            if (fData.iHrs < 24)
-                            {
-                                _local_2 = Math.ceil(((_local_2 * 9) / 10));
-                            }
-                            else
-                            {
-                                _local_2 = Math.ceil((_local_2 / 4));
-                            }
-                        }
-                        else
-                        {
-                            if (_local_2 > game.world.myAvatar.objData.intGold)
-                            {
-                                _local_3 = "#FF0000";
-                            }
-                        }
-
-                        mcGold.ti.htmlText = (((("<font color='" + _local_3) + "'>") + game.strNumWithCommas(_local_2)) + "</font>");
-                        mcGold.visible = true;
-                    }
-                    else if ("bSilver" in fData && fData.bSilver == 1)
-                    {
-                        if (_local_1)
-                        {
-                            _local_2 = Math.ceil((_local_2 / 4));
-                        }
-                        else
-                        {
-                            if (_local_2 > game.world.myAvatar.objData.intSilver)
-                            {
-                                _local_3 = "#FF0000";
-                            }
-                        }
-
-                        mcSilver.ti.htmlText = (((("<font color='" + _local_3) + "'>") + game.strNumWithCommas(_local_2)) + "</font>");
-                        mcSilver.visible = true;
-                    }
-                    else
-                    {
-                        if (_local_1)
-                        {
-                            _local_2 = Math.ceil((_local_2 / 4));
-                        }
-                        else
-                        {
-                            if (_local_2 > game.world.myAvatar.objData.intCopper)
-                            {
-                                _local_3 = "#FF0000";
-                            }
-                        }
-
-                        mcCopper.ti.htmlText = (((("<font color='" + _local_3) + "'>") + game.strNumWithCommas(_local_2)) + "</font>");
-                        mcCopper.visible = true;
-                    }
-
-                    mcCopper.hit.width = ((mcCopper.ti.x + mcCopper.ti.textWidth) + 2);
-                    mcSilver.hit.width = ((mcSilver.ti.x + mcSilver.ti.textWidth) + 2);
-                    mcGold.hit.width = ((mcGold.ti.x + mcGold.ti.textWidth) + 2);
-
-                    if (((game.ui.mcPopup.currentLabel == "MergeShop") && (hasSlider())))
-                    {
-                        positionBy({
-                            "x":450,
-                            "y":-102,
-                            "w":-1,
-                            "h":-1,
-                            "xPosRule":"centerOnX"
-                        });
-                    }
-                    else
-                    {
-                        if (game.ui.mcPopup.currentLabel == "MergeShop" && !hasSlider())
-                        {
-                            positionBy(r);
-                        }
-                    }
-
-                    visible = true;
-                }
-                else
-                {
-                    visible = false;
+        private function fDraw():void {
+            for (var i:int = numChildren - 1; i >= 0; i--) {
+                var child:DisplayObject = getChildAt(i);
+                if (child && child.name && child.name.indexOf("_") != -1) {
+                    removeChildAt(i);
                 }
             }
+
+            visible = false;
+
+            var quantity:int = 1;
+
+            if (getLayout().sMode.indexOf("shop") > -1 && fData != null) {
+
+                var intCopper:int = fData ? fData.intCopper : 0;
+                var intSilver:int = fData ? fData.intSilver : 0;
+                var intGold:int = fData ? fData.intGold : 0;
+
+                if (intCopper == 0 && intSilver == 0 && intGold == 0) return;
+
+                if (qty_parent && getLayout().sMode == "shopBuy" && "splitPanel" in getLayout() && getLayout().splitPanel.visible) {
+                    var selectedQuantity:int = getLayout().splitPanel.frames[2].mc.getSelected();
+                    if (selectedQuantity > 1) quantity = selectedQuantity;
+                }
+                else if (qty_parent && hasSlider() && qty_parent.iQty > 1 && fData.sES != "ar") {
+                    quantity = qty_parent.iQty;
+                }
+
+                setCurrency(intCopper * quantity, intSilver * quantity, intGold * quantity);
+
+                // MergeShop positioning
+                if (game.ui.mcPopup.currentLabel == "MergeShop") {
+                    if (hasSlider()) {
+                        positionBy({ x:450, y:-102, w:-1, h:-1, xPosRule:"centerOnX" });
+                    } else {
+                        positionBy(r);
+                    }
+                }
+
+                visible = true;
+            }
         }
+
+        public function setCurrency(copper:int = 0, silver:int = 0, gold:int = 0):void
+        {
+            var xPos:int = padding;
+
+            if (gold > 0)  xPos = addPart(gold, new CurrencyIconGold(), "_gold", xPos);
+            if (silver > 0) xPos = addPart(silver, new CurrencyIconSilver(), "_silver", xPos);
+            if (copper > 0) xPos = addPart(copper, new CurrencyIconCopper(), "_copper", xPos);
+
+            if (gold == 0 && silver == 0 && copper == 0)
+                xPos = addPart(0, new CurrencyIconCopper(), "_copper", xPos);
+
+            var totalW:int = xPos + padding;
+
+            if (totalW > maxWidth)
+            {
+                var scale:Number = maxWidth / totalW;
+                this.scaleX = scale;
+                this.scaleY = scale;
+                totalW = maxWidth;
+            }
+            else
+            {
+                this.scaleX = 1;
+                this.scaleY = 1;
+            }
+
+            bg.width = totalW;
+            bg.height = 35;
+        }
+
+        private function addPart(amount:int, icon:MovieClip, name:String, xPos:int):int
+        {
+            var tf:TextField = new TextField();
+            tf.name = "_cost";
+            tf.defaultTextFormat = new TextFormat("Calibri", 14, 0xFFFFFF);
+            tf.autoSize = "left";
+            tf.text = amount.toString();
+            tf.selectable = false;
+            addChild(tf);
+
+            var expectedW:int = xPos + tf.textWidth + gap + icon.width;
+            if (expectedW > maxWidth)
+            {
+                // Shrink text only (reduce font size until it fits)
+                var size:int = 14;
+                while (expectedW > maxWidth && size > 8)
+                {
+                    size--;
+                    tf.setTextFormat(new TextFormat("Calibri", size, 0xFFFFFF));
+                    expectedW = xPos + tf.textWidth + gap + icon.width;
+                }
+            }
+
+            tf.x = xPos;
+            tf.y = padding;
+
+            icon.name = name;
+            icon.x = tf.x + tf.width + gap;
+            icon.y = padding + 5;
+            addChild(icon);
+
+            return icon.x + icon.width + spacing; // new xPos for next currency
+        }
+
 
         private function hasSlider():Boolean
         {
@@ -226,23 +185,24 @@ package UI.LPF.Frame
         {
             var _local_3:int;
             var _local_2:int;
-            if (mcGold.visible)
-            {
-                bg.width = (((mcGold.x + mcGold.ti.x) + mcGold.ti.textWidth) + 10);
-                w = bg.width;
-                _local_2 = 1;
-            }
-            else if (mcSilver.visible)
-            {
-                bg.width = (((mcSilver.x + mcSilver.ti.x) + mcSilver.ti.textWidth) + 10);
-                w = bg.width;
-                _local_2 = 1;
-            }
-            else
-            {
-                bg.width = (((mcCopper.x + mcCopper.ti.x) + mcCopper.ti.textWidth) + 10);
-                w = bg.width;
-            }
+
+//            if (mcGold.visible)
+//            {
+//                bg.width = (((mcGold.x + mcGold.ti.x) + mcGold.ti.textWidth) + 10);
+//                w = bg.width;
+//                _local_2 = 1;
+//            }
+//            else if (mcSilver.visible)
+//            {
+//                bg.width = (((mcSilver.x + mcSilver.ti.x) + mcSilver.ti.textWidth) + 10);
+//                w = bg.width;
+//                _local_2 = 1;
+//            }
+//            else
+//            {
+//                bg.width = (((mcCopper.x + mcCopper.ti.x) + mcCopper.ti.textWidth) + 10);
+//                w = bg.width;
+//            }
 
             if (((!(_arg_1 == null)) && ("xPosRule" in _arg_1)))
             {

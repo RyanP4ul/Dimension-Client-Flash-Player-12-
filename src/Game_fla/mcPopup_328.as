@@ -30,7 +30,6 @@ dynamic public class mcPopup_328 extends MovieClip {
     public var mcBag:SimpleButton;
     public var mcCustomize:MovieClip;
     public var mcMap:MovieClip;
-    public var mcTempInventory:TempInventory;
     public var mcPVPPanel:PVPPanelMC;
     public var mcHouseItemHandle:HouseItemHandleMC;
     public var reportMC:MovieClip;
@@ -47,7 +46,7 @@ dynamic public class mcPopup_328 extends MovieClip {
     public var layout:LPFLayout;
 
     public function mcPopup_328() {
-        addFrameScript(0, frame1, 1, frame2, 6, frame7, 14, frame15, 23, frame24, 29, frame30, 39, frame40, 48, frame49, 57, frame58, 64, frame65, 71, frame72, 78, frame79, 86, frame87, 94, frame95, 102, frame103, 111, frame112, 120, frame122, 128, frame129, 138, frame139, 148, frame149, 159, frame160, 168, frame169, 175, frame176, 180, frame181, 185, frame186, 190, frame191, 195, frame196, 200, InventoryOutfit, 205, TestOutfit, 210, Trade, 215, Panel);
+        addFrameScript(0, frame1, 1, frame2, 6, frame7, 14, frame15, 23, frame24, 29, frame30, 39, frame40, 48, frame49, 57, frame58, 64, frame65, 71, frame72, 78, frame79, 86, frame87, 94, frame95, 102, frame103, 111, frame112, 120, frame122, 128, frame129, 138, frame139, 148, frame149, 159, frame160, 168, frame169, 175, frame176, 180, frame181, 185, frame186, 190, frame191, 195, frame196, 200, InventoryOutfit, 205, TestOutfit, 210, Trade, 215, Panel, 220, Vendor);
     }
 
     override public function gotoAndStop(frame:Object, scene:String = null):void {
@@ -488,6 +487,28 @@ dynamic public class mcPopup_328 extends MovieClip {
     }
 
     private function Panel() : void {
+        stop();
+    }
+
+    private function Vendor() : void {
+        layout = (addChild(new LPFLayoutInvShopEnh()) as LPFLayoutInvShopEnh);
+        layout.name = "mcShop";
+        layout.fOpen({
+            "fData": {
+                "itemsShop": game.world.shopinfo.items,
+//                "itemsInv": game.world.myAvatar.items,
+                "objData": game.world.myAvatar.objData,
+                "shopinfo": game.world.shopinfo
+            },
+            "r": {
+                "x": 325,
+                "y": 0,
+                "w": stage.stageWidth,
+                "h": stage.stageHeight
+            },
+            "sMode": "vendor"
+        });
+        layout = null;
         stop();
     }
 

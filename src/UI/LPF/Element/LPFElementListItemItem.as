@@ -76,7 +76,6 @@ public class LPFElementListItemItem extends LPFElementListItem
 
         override protected function fDraw():void
         {
-            var enh:Object;
             var iRank:Number;
             var AssetClass:Class;
             var iconShapeMC:*;
@@ -94,35 +93,21 @@ public class LPFElementListItemItem extends LPFElementListItem
 
             mcFav.visible = fData.bFav == 1;
             favBG.visible = fData.bFav == 1;
-            mcBoost.visible = fData.sMeta != null && hasEffects(String(fData.sMeta)) || fData.hasOwnProperty("skills");
+            mcBoost.visible = fData.hasOwnProperty("effects") || fData.hasOwnProperty("skills");
             tType.htmlText = fData.sType;
 
-            if (["Weapon", "he", "ar", "ba"].indexOf(fData.sES) > -1)
-            {
-                if (fData.PatternID != null)
-                {
-                    enh = game.world.enhPatternTree[fData.PatternID];
-                }
-                if (fData.EnhPatternID != null)
-                {
-                    enh = game.world.enhPatternTree[fData.EnhPatternID];
-                }
-                if (enh != null)
-                {
-                }
-            }
+            var rarity:Object = game.world.rarity[fData.iRty];
+            tType.htmlText = rarity != null ? ("<font color='" + String(rarity.Color).replace("0x", "#") + "'>" + rarity.Name + " Rarity</font> • " + fData.sType) : ("Unknown Rarirty • " + fData.sType);
 
             if (bLimited)
             {
 				nameText += "<font color='#AA0000'> x" + fData.iQtyRemain + "</font>";
             }
-            else
+            else if (fData.iStk > 1)
             {
-                if (fData.iStk > 1)
-                {
-					nameText += "<font color='#999999'> x" + fData.iQty + "</font>";
-                }
+                nameText += "<font color='#999999'> x" + fData.iQty + "</font>";
             }
+
             if (((fData.sES == "ar") && (fData.EnhID > 0)))
             {
                 iRank = game.getRankFromPoints(fData.iQty);
@@ -377,22 +362,6 @@ public class LPFElementListItemItem extends LPFElementListItem
             }
             return (color);
         }
-
-        private function hasEffects(meta:String) : Boolean
-        {
-            var effects:Array = ["dmgall", "undead", "human", "chaos", "dragonkin", "orc", "drakath", "elemental", "cp", "gold", "rep", "exp"];
-
-            for (var key:String in effects)
-            {
-                if (meta.toLowerCase().indexOf(effects[key].toLowerCase()) > -1)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
 
     }
 }//package 

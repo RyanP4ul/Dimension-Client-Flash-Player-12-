@@ -138,8 +138,8 @@ import flash.events.MouseEvent;
                 _local_3.frame = new LPFFrameCostDisplay();
                 _local_3.fData = null;
                 _local_3.r = {
-                    "x":int((173 + (96 / 2))),
-                    "y":-66,
+                    "x":30,
+                    "y":-90,
                     "w":-1,
                     "h":-1,
                     "xPosRule":"centerOnX"
@@ -157,7 +157,7 @@ import flash.events.MouseEvent;
                     "h":-1
                 };
                 _local_3.eventTypes = ["previewButton2Update"];
-                addFrame(_local_3);
+                addFrame(_local_3);;
 			}
 
             var isMergeShop:Boolean = MovieClip(fParent).game.ui.mcPopup.currentLabel == "MergeShop";

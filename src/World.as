@@ -5,6 +5,7 @@
 
 package {
 
+import Game_fla.cnt_181;
 import Game_fla.ui_243;
 
 import UI.Display.auraDisplay;
@@ -103,6 +104,7 @@ public class World extends MovieClip {
     public var TRASH:MovieClip;
     public var map:MovieClip;
     public var mapBoundsMC:MovieClip = null;
+    public var isVendorShop:Boolean = false;
     public var zSortArr:Array = [];
     public var ldr_map:URLLoader = new URLLoader();
     internal var preLMC:*;
@@ -469,7 +471,6 @@ public class World extends MovieClip {
     private var convertTimer:Timer;
     private var activeCell:String;
 
-    private var needsZSort:Boolean = false;
     private var auraFXPool:Object = {};
     private var cooldownTargets:Array = [];
     private var frameHandlerActive:Boolean = false;
@@ -1345,8 +1346,6 @@ public class World extends MovieClip {
 
 		if (!bitWalk || o.tx == _arg_2 && o.ty == _arg_3) return;
 
-        needsZSort = true;
-
         uoTreeLeafSet(game.net.myUserName, {
             tx: int(_arg_2),
             ty: int(_arg_3),
@@ -1638,7 +1637,7 @@ public class World extends MovieClip {
                         }
                     } else {
 //                        if (((!pAV.objData.hasOwnProperty("strSpawnTimePeriod") &&  pAV.objData.strSpawnTimePeriod == "Always") || (pAV.objData.strSpawnTimePeriod != "Always") && pAV.objData.strSpawnTimePeriod == getTimePeriodDay()))
-                        if (!pAV.objData.hasOwnProperty("ReqQuestID") || (pAV.objData.hasOwnProperty("ReqQuestID") && QuestController.isQuestComplete(pAV.objData.ReqQuestID)))
+                        if (true) // (!pAV.objData.hasOwnProperty("ReqQuestID") || (pAV.objData.hasOwnProperty("ReqQuestID") && QuestController.isQuestComplete(pAV.objData.ReqQuestID)))
                         {
                             var avatar:AvatarMC = loadAvatar(this, pAV, true, pAV.objData.Scale);
                             avatar.name = pAV.objData.strUsername + "_Npc_" + pAV.objData.NpcID;
@@ -2073,7 +2072,7 @@ public class World extends MovieClip {
             objHouseData.arrPlacement = [];
             initEquippedItems(objHouseData.arrPlacement);
             sendSaveHouseSetup(objHouseData.sHouseInfo);
-            game.requestAPI(URLRequestMethod.POST, "character/HouseSaveRoom", {"frame":"*"}, callbackC, callbackB, true);
+            game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {"frame":"*"}, callbackC, callbackB, true);
         }
     }
 
@@ -2531,7 +2530,7 @@ public class World extends MovieClip {
         var _local_2:String = imbalancedHouseCells.shift();
         game.mcConnDetail.showConn((("Upgrading room " + _local_2) + "..."), false, true);
         game.chatF.pushMsg("server", (("Saving room " + _local_2) + "..."), "SERVER", "", 0);
-        game.requestAPI(URLRequestMethod.POST, "character/HouseSaveRoom", {
+        game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {
             "frame":_local_2,
             "layout":objHouseData.sData[_local_2]
         }, callbackA, callbackB, true);
@@ -2764,7 +2763,7 @@ public class World extends MovieClip {
         var _local_2:*;
         game.mcConnDetail.showConn((("Converting frame " + activeCell) + " from legacy house data..."), false, true);
         game.chatF.pushMsg("server", (("Saving room " + activeCell) + "..."), "SERVER", "", 0);
-        game.requestAPI(URLRequestMethod.POST, "character/HouseSaveRoom", {
+        game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {
             "frame":activeCell,
             "layout":houseJson[activeCell]
         }, callbackA, callbackB, true);
@@ -2826,7 +2825,7 @@ public class World extends MovieClip {
         }
         objHouseData.arrPlacement[strFrame] = _local_2;
 
-        game.requestAPI(URLRequestMethod.POST, "character/HouseSaveRoom", {
+        game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {
             "frame":strFrame,
             "layout":_local_2
         }, callbackA, callbackB, true);
@@ -3869,7 +3868,15 @@ public class World extends MovieClip {
         if (o.accept)
         {
             shopBuyItem = o.iSel;
-            game.net.send("buyItem", [o.iSel.ItemID, shopinfo.ShopID, o.iSel.ShopItemID, o.iQty]);
+
+            if (isVendorShop)
+            {
+                game.net.send("buyVendorItem", [o.iSel.ItemID, String(shopinfo.sName).split(" ")[0], o.iQty]);
+            }
+            else
+            {
+                game.net.send("buyItem", [o.iSel.ItemID, shopinfo.ShopID, o.iSel.ShopItemID, o.iQty]);
+            }
         }
     }
 
@@ -4300,32 +4307,34 @@ public class World extends MovieClip {
     }
 
     public function showResCounter():* {
-        var _local_1:* = MovieClip(game.ui.mcRes);
-        if (_local_1.currentLabel == "in") {
-            return;
-        }
-        _local_1.gotoAndPlay("in");
-        _local_1.resC = 10;
-        if (_local_1.resTimer == null) {
-            _local_1.resTimer = new Timer(1000);
-            _local_1.resTimer.addEventListener("timer", resTimer);
+        var mcRes:MovieClip = game.ui.addChild(new cnt_181()) as MovieClip; // MovieClip(game.ui.mcRes);
+        mcRes.name = "mcRes";
+        mcRes.x = 0;
+        mcRes.y = 0;
+        if (mcRes.currentLabel == "in") return;
+        mcRes.gotoAndPlay("in");
+        mcRes.resC = 10;
+        if (mcRes.resTimer == null) {
+            mcRes.resTimer = new Timer(1000);
+            mcRes.resTimer.addEventListener("timer", resTimer);
         } else {
-            _local_1.resTimer.reset();
+            mcRes.resTimer.reset();
         }
-        _local_1.resTimer.start();
+        mcRes.resTimer.start();
     }
 
     public function resTimer(_arg_1:TimerEvent):* {
-        var _local_2:* = MovieClip(game.ui.mcRes);
-        _local_2.resC--;
-        if (_local_2.resC > 0) {
-            _local_2.mcTomb.ti.text = ("0" + _local_2.resC);
+        var mcRes:MovieClip = game.ui.getChildByName("mcRes") as MovieClip;
+        mcRes.resC--;
+        if (mcRes.resC > 0) {
+            mcRes.mcTomb.ti.text = ("0" + mcRes.resC);
         } else {
-            _local_2.mcTomb.ti.text = "00";
+            mcRes.mcTomb.ti.text = "00";
             _arg_1.target.reset();
-            _local_2.visible = false;
-            _local_2.gotoAndStop(1);
+            mcRes.visible = false;
+            mcRes.gotoAndStop(1);
             resPlayer();
+            game.ui.removeChild(mcRes);
         }
     }
 
@@ -5670,139 +5679,154 @@ public class World extends MovieClip {
     }
 
     public function castSpellFX(cAvt:*, spFX:*, spell:*, dur:int = 0):* {
+        // Early exit conditions
+        if (!cAvt || !spFX || !showAnimations ||
+                (cAvt.pMC && !cAvt.pMC.mcChar.visible && !cAvt.isMyAvatar)) {
+            if (cAvt && cAvt.pMC) cAvt.pMC.clearSpFXQueue();
+            return;
+        }
+
+        // Check animation preferences
+        if (game.preference.data.bDisSkillAnim &&
+                (!game.preference.data.bAnimSelf || !cAvt.isMyAvatar)) {
+            if (cAvt.pMC) cAvt.pMC.clearSpFXQueue();
+            return;
+        }
+
+        // Validate required parameters
+        if (!spFX.strl || spFX.strl == "" || !spFX.avts) {
+            return;
+        }
+
+        var targetMCs:Array;
         var tAvt:Avatar;
         var AssetClass:Class;
         var spellFX:*;
-        var targetMCs:Array;
         var i:int;
 
         try {
-            if (((!(showAnimations)) || (((cAvt) && (!(cAvt.isMyAvatar))) && (!(cAvt.pMC.mcChar.visible)))))
-            {
-                cAvt.pMC.clearSpFXQueue();
-                return;
+            switch (spFX.fx) {
+                case "c": // Chain effect
+                    handleChainEffect(cAvt, spFX);
+                    break;
+
+                case "f": // Funnel effect
+                    handleFunnelEffect(cAvt, spFX);
+                    break;
+
+                case "p": // Projectile effect
+                case "w": // World effect
+                    handleStandardEffects(cAvt, spFX, spell, dur);
+                    break;
+            }
+        } catch (e:Error) {
+            trace("Spell FX Error: " + e.message);
+            if (cAvt && cAvt.pMC) cAvt.pMC.clearSpFXQueue();
+        }
+    }
+
+    private function handleChainEffect(cAvt:*, spFX:*):void {
+        if (spFX.strl != "lit1") return;
+
+        var targetMCs:Array = [cAvt.pMC.mcChar];
+        var validTargets:int = 0;
+
+        // Pre-count valid targets
+        for each (var tAvt:Avatar in spFX.avts) {
+            if (tAvt && tAvt.pMC && tAvt.pMC.mcChar) {
+                targetMCs.push(tAvt.pMC.mcChar);
+                validTargets++;
+            }
+        }
+
+        // Only create chain if we have multiple valid targets
+        if (validTargets > 0) {
+            var AssetClass:Class = getClass("sp_C1") as Class;
+            if (AssetClass) {
+                var spellFX:* = new AssetClass();
+                spellFX.mouseEnabled = false;
+                spellFX.mouseChildren = false;
+                spellFX.visible = true;
+                spellFX.world = this;
+                spellFX.strl = spFX.strl;
+
+                CHARS.addChild(spellFX);
+                game.drawChainsLinear(targetMCs, 33, spellFX);
+            }
+        }
+    }
+
+    private function handleFunnelEffect(cAvt:*, spFX:*):void {
+        var targetMCs:Array = [cAvt.pMC.mcChar];
+        var tAvt:Avatar = spFX.avts[0];
+
+        if (tAvt && tAvt.pMC && tAvt.pMC.mcChar) {
+            targetMCs.push(tAvt.pMC.mcChar);
+
+            var spellFX:MovieClip = new MovieClip();
+            spellFX.mouseEnabled = false;
+            spellFX.mouseChildren = false;
+            spellFX.visible = true;
+            spellFX.world = this;
+            spellFX.strl = spFX.strl;
+
+            CHARS.addChild(spellFX);
+            game.drawFunnel(targetMCs, spellFX);
+        }
+    }
+
+    private function handleStandardEffects(cAvt:*, spFX:*, spell:*, dur:int):void {
+        var AssetClass:Class;
+        var spellFX:*;
+
+        for each (var tAvt:Avatar in spFX.avts) {
+            if (!tAvt || !tAvt.pMC) continue;
+
+            AssetClass = getClass(spFX.strl) as Class;
+            if (!AssetClass) continue;
+
+            spellFX = new AssetClass();
+            spellFX.spellDur = dur;
+
+            if (spell) {
+                spellFX.transform = spell.transform;
             }
 
-            if (game.preference.data.bDisSkillAnim)
-            {
-                if (((!(game.preference.data.bAnimSelf)) || (((game.preference.data.bAnimSelf) && (cAvt)) && (!(cAvt.isMyAvatar)))))
-                {
-                    cAvt.pMC.clearSpFXQueue();
-                    return;
-                }
-            }
+            // Set common properties
+            spellFX.mouseEnabled = false;
+            spellFX.mouseChildren = false;
+            spellFX.visible = true;
+            spellFX.world = this;
+            spellFX.strl = spFX.strl;
+            spellFX.tMC = tAvt.pMC;
 
-            if ((((!(spFX.strl == null)) && (!(spFX.strl == ""))) && (!(spFX.avts == null))))
-            {
-                targetMCs = [];
-                i = 0;
-                if (spFX.fx == "c")
-                {
-                    if (spFX.strl == "lit1")
-                    {
-                        targetMCs.push(cAvt.pMC.mcChar);
-                        i = 0;
-                        while (i < spFX.avts.length)
-                        {
-                            tAvt = spFX.avts[i];
-                            if ((((!(tAvt == null)) && (!(tAvt.pMC == null))) && (!(tAvt.pMC.mcChar == null))))
-                            {
-                                targetMCs.push(tAvt.pMC.mcChar);
-                            }
-                            i = (i + 1);
-                        }
-                        if (targetMCs.length > 1)
-                        {
-                            AssetClass = (getClass("sp_C1") as Class);
-                            if (AssetClass != null)
-                            {
-                                spellFX = new (AssetClass)();
-                                spellFX.mouseEnabled = false;
-                                spellFX.mouseChildren = false;
-                                spellFX.visible = true;
-                                spellFX.world = MovieClip(this);
-                                spellFX.strl = spFX.strl;
-                                game.drawChainsLinear(targetMCs, 33, MovieClip(CHARS.addChild(spellFX)));
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    if (spFX.fx == "f")
-                    {
-                        targetMCs.push(cAvt.pMC.mcChar);
-                        tAvt = spFX.avts[0];
-                        if ((((!(tAvt == null)) && (!(tAvt.pMC == null))) && (!(tAvt.pMC.mcChar == null))))
-                        {
-                            targetMCs.push(tAvt.pMC.mcChar);
-                        }
-                        if (targetMCs.length > 1)
-                        {
-                            spellFX = new MovieClip();
-                            spellFX.mouseEnabled = false;
-                            spellFX.mouseChildren = false;
-                            spellFX.visible = true;
-                            spellFX.world = MovieClip(this);
-                            spellFX.strl = spFX.strl;
-                            game.drawFunnel(targetMCs, MovieClip(CHARS.addChild(spellFX)));
-                        }
-                    }
-                    else
-                    {
-                        i = 0;
-                        while (i < spFX.avts.length)
-                        {
-                            tAvt = spFX.avts[i];
-                            if (tAvt != null)
-                            {
-                                if (tAvt.pMC != null)
-                                {
-                                    AssetClass = (getClass(spFX.strl) as Class);
-                                    if (AssetClass != null)
-                                    {
-                                        spellFX = new (AssetClass)();
-                                        spellFX.spellDur = dur;
-                                        if (spell != null)
-                                        {
-                                            spellFX.transform = spell.transform;
-                                        }
-                                        CHARS.addChild(spellFX);
-                                        spellFX.mouseEnabled = false;
-                                        spellFX.mouseChildren = false;
-                                        spellFX.visible = true;
-                                        spellFX.world = MovieClip(this);
-                                        spellFX.strl = spFX.strl;
-                                        spellFX.tMC = tAvt.pMC;
-                                        switch (spFX.fx)
-                                        {
-                                            case "p":
-                                                spellFX.x = cAvt.pMC.x;
-                                                spellFX.y = (cAvt.pMC.y - (cAvt.pMC.mcChar.height * 0.5));
-                                                spellFX.dir = (((tAvt.pMC.x - cAvt.pMC.x) >= 0) ? 1 : -1);
-                                                break;
-                                            case "w":
-                                                spellFX.x = spellFX.tMC.x;
-                                                spellFX.y = (spellFX.tMC.y + 3);
-                                                if (cAvt != null)
-                                                {
-                                                    if (spellFX.tMC.x < cAvt.pMC.x)
-                                                    {
-                                                        spellFX.scaleX = (spellFX.scaleX * -1);
-                                                    }
-                                                }
-                                                break;
-                                        }
-                                    }
-                                }
-                            }
-                            i = (i + 1);
-                        }
-                    }
-                }
+            CHARS.addChild(spellFX);
+
+            // Position based on effect type
+            switch (spFX.fx) {
+                case "p": // Projectile
+                    positionProjectileEffect(spellFX, cAvt, tAvt);
+                    break;
+
+                case "w": // World
+                    positionWorldEffect(spellFX, cAvt, tAvt);
+                    break;
             }
-        } catch (e) {
-            cAvt.pMC.clearSpFXQueue();
+        }
+    }
+
+    private function positionProjectileEffect(spellFX:*, caster:*, target:*):void {
+        spellFX.x = caster.pMC.x;
+        spellFX.y = caster.pMC.y - (caster.pMC.mcChar.height * 0.5);
+        spellFX.dir = (target.pMC.x >= caster.pMC.x) ? 1 : -1;
+    }
+
+    private function positionWorldEffect(spellFX:*, caster:*, target:*):void {
+        spellFX.x = target.pMC.x;
+        spellFX.y = target.pMC.y + 3;
+
+        if (caster && target.pMC.x < caster.pMC.x) {
+            spellFX.scaleX *= -1;
         }
     }
 
@@ -7830,15 +7854,6 @@ public class World extends MovieClip {
         game.ldrMC.loadFile(FG, _arg_1, _arg_2);
     }
 
-    public function showPreL():* {
-        if (((preLMC == null) || (!(MovieClip(this).contains(preLMC))))) {
-            preLMC = new PreL();
-            addChild(preLMC);
-            preLMC.x = ((ConfigurationData.CLIENT_WIDTH / 2) - (preLMC.width / 2));
-            preLMC.y = ((ConfigurationData.CLIENT_HEIGHT / 2) - (preLMC.height / 2));
-        }
-    }
-
 //    private function calculateFPS():void {
 //        try
 //        {
@@ -7915,8 +7930,6 @@ public class World extends MovieClip {
     public function onZmanagerEnterFrame(_arg_1:Event):* {
         calculateFPS();
 
-        if (!needsZSort) return;
-
         var zSortArr:Array = [];
 
         for (var i:int = 0; i < CHARS.numChildren; i++) {
@@ -7934,8 +7947,6 @@ public class World extends MovieClip {
                 CHARS.swapChildrenAt(mcIndex, j);
             }
         }
-
-        needsZSort = false;
     }
 
     public function iaTrigger(_arg_1:MovieClip):* {
@@ -8184,6 +8195,168 @@ public class World extends MovieClip {
         lootTemporary.update({"eventType": "refreshItems"});
         game.RefreshLootCount();
     }
+
+//    public function mapScrollCheck():void
+//    {
+//        if (!SCROLL) return;
+//
+//        // Cache frequently used values
+//        var p:Point = new Point(this.x, this.y);
+//        var bounds:Rectangle = map.walk.getRect(stage);
+//        var _halfWidth:int = ConfigurationData.CLIENT_WIDTH / 2;
+//        var _halfHeight:int = ConfigurationData.CLIENT_HEIGHT / 2;
+//        var _cdy:int = _halfHeight - 50;
+//
+//        // Horizontal scrolling
+//        var maxRight:int = bounds.width - _halfWidth;
+//        var minLeft:int = _halfWidth;
+//
+//        if (p.x > minLeft && p.x < maxRight)
+//        {
+//            var xd:int = _halfWidth - (bounds.x + p.x);
+//            if (xd != 0)
+//            {
+//                map.x += xd;
+//                CHARS.x += xd;
+//            }
+//        }
+//        else
+//        {
+//            var targetX:int = 0;
+//            if (p.x <= minLeft)
+//            {
+//                targetX = 0;
+//            }
+//            else if (p.x >= maxRight)
+//            {
+//                targetX = ConfigurationData.CLIENT_WIDTH - bounds.width;
+//            }
+//
+//            if (map.x != targetX)
+//            {
+//                map.x = targetX;
+//                CHARS.x = targetX;
+//            }
+//        }
+//
+//        // Vertical scrolling
+//        var maxBottom:int = bounds.height - (ConfigurationData.CLIENT_HEIGHT - _cdy);
+//
+//        if (p.y > _cdy && p.y < maxBottom)
+//        {
+//            var yd:int = _cdy - (bounds.y + p.y);
+//            if (yd != 0)
+//            {
+//                map.y += yd;
+//                CHARS.y += yd;
+//            }
+//        }
+//        else
+//        {
+//            var targetY:int = 0;
+//            if (p.y <= _cdy)
+//            {
+//                targetY = 0;
+//            }
+//            else if (p.y >= maxBottom)
+//            {
+//                targetY = ConfigurationData.CLIENT_HEIGHT - bounds.height;
+//            }
+//
+//            if (map.y != targetY)
+//            {
+//                map.y = targetY;
+//                CHARS.y = targetY;
+//            }
+//        }
+//    }
+
+//    public function mapScrollCheck():void {
+//        if (!SCROLL) return;
+//
+//        var p:Point = myAvatar.pMC.location;
+//        var bounds:Rectangle = map.walk.getRect(stage);
+//        var _halfWidth:int = ConfigurationData.CLIENT_WIDTH * 0.5;
+//        var _halfHeight:int = ConfigurationData.CLIENT_HEIGHT * 0.5;
+//        var _cdy:int = _halfHeight - 50;
+//
+//        var mapChanged:Boolean = false;
+//        var targetX:int = map.x;
+//        var targetY:int = map.y;
+//
+//        // Cache frequently used values
+//        var boundsX:int = bounds.x + p.x;
+//        var boundsY:int = bounds.y + p.y;
+//
+//        // Horizontal Scrolling
+//        var maxRight:int = bounds.width - _halfWidth;
+//        var minLeft:int = _halfWidth;
+//
+//        if (p.x > minLeft && p.x < maxRight) {
+//            targetX += _halfWidth - boundsX;
+//        } else {
+//            if (p.x <= minLeft) {
+//                targetX = 0;
+//            } else if (p.x >= maxRight) {
+//                targetX = ConfigurationData.CLIENT_WIDTH - bounds.width;
+//            }
+//        }
+//
+//        // Vertical Scrolling
+//        var maxBottom:int = bounds.height - (ConfigurationData.CLIENT_HEIGHT - _cdy);
+//
+//        if (p.y > _cdy && p.y < maxBottom) {
+//            targetY += _cdy - boundsY;
+//        } else {
+//            if (p.y <= _cdy) {
+//                targetY = 0;
+//            } else if (p.y >= maxBottom) {
+//                targetY = ConfigurationData.CLIENT_HEIGHT - bounds.height;
+//            }
+//        }
+//
+//        // Apply changes only if needed
+//        if (map.x != targetX || map.y != targetY) {
+//            map.x = targetX;
+//            map.y = targetY;
+//            CHARS.x = targetX;
+//            CHARS.y = targetY;
+//            mapChanged = true;
+//        }
+//    }
+
+//    public function mapScrollCheck():void {
+//        if (!SCROLL) return;
+//
+//        var p:Point = myAvatar.pMC.location;
+//        var bounds:Rectangle = map.walk.getRect(stage);
+//
+//        var halfW:int = ConfigurationData.CLIENT_WIDTH / 2;
+//        var halfH:int = ConfigurationData.CLIENT_HEIGHT / 2;
+//
+//        // Desired camera position centers on player
+//        var targetX:Number = halfW - (bounds.x + p.x);
+//        var targetY:Number = halfH - (bounds.y + p.y);
+//
+//        // Clamp to map edges (so camera never shows outside map)
+//        var minX:Number = ConfigurationData.CLIENT_WIDTH - bounds.width;
+//        var maxX:Number = 0;
+//        var minY:Number = ConfigurationData.CLIENT_HEIGHT - bounds.height;
+//        var maxY:Number = 0;
+//
+//        targetX = Math.max(minX, Math.min(maxX, targetX));
+//        targetY = Math.max(minY, Math.min(maxY, targetY));
+//
+//        // Smooth easing (adjust 0.1 for stronger/weaker follow)
+//        var ease:Number = 0.1;
+//        map.x += (targetX - map.x) * ease;
+//        map.y += (targetY - map.y) * ease;
+//
+//        // Sync CHARS layer
+//        CHARS.x = map.x;
+//        CHARS.y = map.y;
+//    }
+
 
     public function mapScrollCheck():void {
         if (!SCROLL) return;
