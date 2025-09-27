@@ -1305,10 +1305,9 @@ public class Avatar {
 
     public function IsOwned(isHouse:Boolean, ItemID:int):Boolean
     {
-        var _local_3:*;
-        for each (_local_3 in ((isHouse) ? houseitems : items))
+        for each (var item:Object in ((isHouse) ? houseitems : items))
         {
-            if (_local_3.ItemID == ItemID)
+            if (item.ItemID == ItemID)
             {
                 return true;
             }

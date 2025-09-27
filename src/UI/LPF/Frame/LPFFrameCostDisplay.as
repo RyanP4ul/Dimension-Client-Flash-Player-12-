@@ -139,7 +139,7 @@ import flash.display.MovieClip;
             tf.name = "_cost";
             tf.defaultTextFormat = new TextFormat("Calibri", 14, amount > current ? 0xFF0000 : 0xFFFFFF);
             tf.autoSize = "left";
-            tf.text = amount.toString();
+            tf.text = game.strNumWithCommas(amount); // amount.toString();
             tf.selectable = false;
             addChild(tf);
 
@@ -157,11 +157,11 @@ import flash.display.MovieClip;
             }
 
             tf.x = xPos;
-            tf.y = padding;
+            tf.y = padding - 2;
 
             icon.name = name;
             icon.x = tf.x + tf.width + gap;
-            icon.y = padding + 5;
+            icon.y = padding + 2;
             addChild(icon);
 
             return icon.x + icon.width + spacing;

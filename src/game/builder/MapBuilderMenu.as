@@ -10,7 +10,7 @@ import game.quest.TestLoader;
 
 public class MapBuilderMenu extends BuilderObjectDraggable {
 
-    private var areaObjects:Array = ["Navigator", "Navigation", "Tooltip", "Monster", "Pad", "Unwalkable", "Aggro", "Passive Aggro", "Npc", "Trap", "Arrow", "Collision", "Mining", "AttackIndicator"];
+    private var areaObjects:Array = ["Navigator", "Navigation", "Tooltip", "Monster", "Pad", "Unwalkable", "Aggro", "Passive Aggro", "Npc", "Trap", "Arrow", "Collision", "Resource", "AttackIndicator"];
     public var isPropsEnabled:Boolean = true;
     public var isMonsEnabled:Boolean = true;
 
@@ -320,18 +320,18 @@ public class MapBuilderMenu extends BuilderObjectDraggable {
                         y: Number(child.y)
                     });
                 }
-                else if (child is MapMining)
+                else if (child is MapResource)
                 {
-                    var inputMiningId:BuilderInput = form.getChildByName("input-miningid") as BuilderInput;
+                    var inputResMapId:BuilderInput = form.getChildByName("input-resmapid") as BuilderInput;
                     var inputLinkage:BuilderInput = form.getChildByName("input-linkage") as BuilderInput;
                     var inputText:BuilderInput = form.getChildByName("input-text") as BuilderInput;
                     var inputMessage:BuilderInput = form.getChildByName("input-message") as BuilderInput;
 
                     timeline.push({
-                        type: "Mining",
+                        type: "Resource",
                         bLock: bLock,
                         bShow: bShow,
-                        miningId: int(inputMiningId.tInput.text),
+                        resMapId: int(inputResMapId.tInput.text),
                         strLinkage: inputLinkage.tInput.text,
                         text: inputText.tInput.text,
                         message: inputMessage.tInput.text,
@@ -486,8 +486,8 @@ public class MapBuilderMenu extends BuilderObjectDraggable {
             case "Arrow":
                 game.mapBuilder.createElement({ type: "Arrow", bLock: false, bShow: true, select: 1, style: 1, flip: "Vertical", rotation: 0, x: 0, y: 0 });
                 break;
-            case "Mining":
-                game.mapBuilder.createElement({ type: "Mining", bLock: false, bShow: true, miningId: 1, strLinkage: "Iron", text: "Mining", message: "Success!", x: 0, y: 0 });
+            case "Resource":
+                game.mapBuilder.createElement({ type: "Resource", bLock: false, bShow: true, resMapId: -1, strLinkage: "Iron", text: "Resource", message: "Success!", x: 0, y: 0 });
                 break;
             case "AttackIndicator":
                 game.mapBuilder.createElement({ type: "AttackIndicator", bLock: false, bShow: true, shape: "circle", color: "0xFF0000", width: 5, height: 5, x: 0, y: 0 });

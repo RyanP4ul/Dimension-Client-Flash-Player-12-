@@ -6,7 +6,7 @@ import flash.filters.GlowFilter;
 import flash.text.TextField;
 import flash.text.TextFormat;
 
-dynamic public class MapMining extends BuilderObjectDraggable {
+dynamic public class MapResource extends BuilderObjectDraggable {
 
     public var shadow:MovieClip;
     public var ResMapID:int = -1;
@@ -16,7 +16,7 @@ dynamic public class MapMining extends BuilderObjectDraggable {
     private var miningInteraction:MapButtonInteract;
     private var tQuantity:TextField;
 
-    public function MapMining() {
+    public function MapResource() {
         SetBaseMc(shadow);
         shadow.visible = game.mapBuilder.visible;
 

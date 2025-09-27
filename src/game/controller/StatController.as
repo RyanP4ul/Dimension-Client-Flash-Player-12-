@@ -44,6 +44,9 @@ public class StatController {
     public var intHouseSpaceCap:Number;
     public var intHouseSpacePrice:Number;
 
+    public var intCopperToSilver:Number;
+    public var intSilverToGold:Number;
+
     public var stats:Array = ["STR", "END", "DEX", "INT", "WIS", "LCK"];
     public var orderedStats:Array = ["STR", "INT", "DEX", "WIS", "END", "LCK"];
     public var statMap:Object = {
@@ -611,6 +614,13 @@ public class StatController {
         }
         if (o.intHouseSpacePrice != null) {
             intHouseSpacePrice = o.intHouseSpacePrice;
+        }
+
+        if (o.intCopperToSilver != null) {
+            intCopperToSilver = o.intCopperToSilver;
+        }
+        if (o.intSilverToGold != null) {
+            intSilverToGold = o.intSilverToGold;
         }
     }
 

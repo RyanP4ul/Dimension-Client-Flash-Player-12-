@@ -121,6 +121,7 @@ public class World extends MovieClip {
     public var monmap:Array = [];
     public var monswf:Array;
     public var monsters:Array = [];
+	public var resources:Object = {};
     public var npcdef:Array;
     public var npcmap:Array;
     public var npcs:Array = [];
@@ -3367,7 +3368,7 @@ public class World extends MovieClip {
                     if ("stars" in avtPortrait) {
                         numStars = int(Math.round((Math.pow((avt.objData.intLevel * 1.3), 0.5) / 2)));
                         j = 1;
-                        while (j < 6) {
+                        while (j < 11) {
                             avtPortrait.stars.getChildByName(("s" + j)).visible = j <= numStars;
                             j++;
                         }

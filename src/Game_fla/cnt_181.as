@@ -35,15 +35,25 @@ package Game_fla
     {
 
         public var mcTomb:MovieClip;
+		public var tDeduce:TextField;
+		private var game:Game = Game.root;
 
         public function cnt_181()
         {
             addFrameScript(0, frame1, 4, frame5, 19, frame20, 56, frame57);
         }
 
-
         private function frame1() : void
         {
+			var deduceExp:Number = Number(game.world.myAvatar.objData.intExpToLevel) * 0.1;
+			var newExp:Number = Math.max(Number(game.world.myAvatar.objData.intExp) - deduceExp, 0);
+			
+			game.world.myAvatar.objData.intExp = newExp;
+			tDeduce.text = "-" + deduceExp + " Experience";
+			game.updateXPBar();
+			
+			game.net.send("dead", []);
+			
             stop();
         }
 

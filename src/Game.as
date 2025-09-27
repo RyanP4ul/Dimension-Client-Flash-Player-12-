@@ -2937,8 +2937,8 @@ public class Game extends MovieClip {
                 loginInfo.userId = objLogin.userId;
                 loginInfo.strToken = objLogin.sToken;
 
-//                mcLogin.gotoAndStop("Test");
-                mcLogin.gotoAndStop(_characters.length > 0 ? "Characters" : "Create");
+                mcLogin.gotoAndStop("Test");
+//                mcLogin.gotoAndStop(_characters.length > 0 ? "Characters" : "Create");
             } else {
                 mcConnDetail.showError(response.sMsg);
             }

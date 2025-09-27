@@ -480,6 +480,12 @@ public class RequestHandler extends Object {
             case "buyVendorItem":
                 BuyVendorItem(o);
                 break;
+            case "convertCurrency":
+                ConvertCurrency(o);
+                break;
+			case "resource":
+				Resource(o);
+				break;
         }
     }
 
@@ -1108,6 +1114,10 @@ public class RequestHandler extends Object {
             game.world.npcmap = [];
         }
 
+		game.world.resources = o.hasOwnProperty("resources") ? o.resources : [];
+
+        trace("Resources => " + JSON.stringify(game.world.resources));
+
         game.world.isFloor = Boolean(o.isFloor);
         game.world.isDungeon = Boolean(o.isDungeon);
         game.world.curRoom = Number(o.areaId);
@@ -1258,13 +1268,12 @@ public class RequestHandler extends Object {
         if (o.intExp != null && o.intExp > 0) {
 
             if (game.bAnalyzer && game.bAnalyzer.isRunning) game.bAnalyzer.addExp(o.intExp);
-
             var mon:Avatar;
             var deltaXP:int = o.intExp;
             game.world.myAvatar.objData.intExp = (game.world.myAvatar.objData.intExp + deltaXP);
             game.updateXPBar();
 
-            if (game.world.myAvatar.petMC.objData != null)
+            if (game.world.myAvatar.petMC != null && game.world.myAvatar.petMC.objData != null)
             {
                 game.world.myAvatar.petMC.objData.data.XP += deltaXP;
 
@@ -1281,6 +1290,7 @@ public class RequestHandler extends Object {
                 xpB.t.ti.text = String((("+ " + o.bonusExp) + " xp!"));
                 xp.t.ti.text = ((deltaXP - o.bonusExp) + " xp");
             }
+			trace("AddGoldExp > 6");
             if (o.typ != null && o.typ == "m") {
                 mon = game.world.getMonster(o.id);
                 xp.x = mon.pMC.mcChar.x;
@@ -1314,6 +1324,7 @@ public class RequestHandler extends Object {
             var copper:goldDisplay = new goldDisplay();
             copper.t.ti.htmlText = (deltaCopper + " <font color=\"#B87333\">copper</font>");
             copper.tMask.ti.htmlText = (deltaCopper + " copper");
+			
             if (o.typ != null && o.typ == "m") {
                 mon = game.world.getMonster(o.id);
                 copper.x = mon.pMC.mcChar.x;
@@ -1334,7 +1345,7 @@ public class RequestHandler extends Object {
                 MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({"eventType": "refreshCurrency"});
             }
             var silver:goldDisplay = new goldDisplay();
-            silver.t.ti.htmlText = (deltaSilver + " <font color=\"#C0C0C0\">silver</font>");
+			silver.t.ti.htmlText = (deltaSilver + " <font color=\"#C0C0C0\">silver</font>");
             silver.tMask.ti.htmlText = (deltaSilver + " silver");
             if (o.typ != null && o.typ == "m") {
                 mon = game.world.getMonster(o.id);
@@ -3814,6 +3825,55 @@ public class RequestHandler extends Object {
 
         QuestController.updateQuest(item);
     }
+
+    private function ConvertCurrency(o:Object) : void
+    {
+		var quantity:Number = o.Quantity;
+	
+        switch (String(o.Type)) {
+            case "ConvertCopperToSilver":
+                game.world.myAvatar.objData.intCopper = int(o.Left);
+                game.world.myAvatar.objData.intSilver = game.world.myAvatar.objData.intSilver + quantity;
+                break;
+			case "ConvertSilverToGold":
+                game.world.myAvatar.objData.intSilver = int(o.Left);
+                game.world.myAvatar.objData.intGold = game.world.myAvatar.objData.intGold + quantity;
+                break;
+        }
+
+        if (game.ui.mcPopup.currentLabel == "Shop") {
+            MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshCurrency"});
+            MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({
+                "eventType": "refreshItems",
+                "sInstruction": "closeWindows"
+            });
+            if (game.world.shopinfo.bLimited) {
+                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshShop"});
+            }
+        } else {
+            if (game.ui.mcPopup.currentLabel == "MergeShop") {
+                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshCurrency"});
+                MovieClip(game.ui.mcPopup.getChildByName("mcShop")).update({"eventType": "refreshItems"});
+            } else {
+                if (game.ui.mcPopup.currentLabel == "Inventory") {
+                    MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({"eventType": "refreshCurrency"});
+                    MovieClip(game.ui.mcPopup.getChildByName("mcInventory")).update({
+                        "eventType": "refreshItems",
+                        "sInstruction": "closeWindows"
+                    });
+                }
+            }
+        }
+    }
+	
+	private function Resource(o:Object): void 
+	{
+		if (!game.world.resources.hasOwnProperty(o.ResMapID)) return;
+		
+		game.world.resources[o.ResMapID].QuantityRemain = int(o.QuantityRemain);
+		
+		// UPDATE TEXT FIELD!
+	}
 
 }
 

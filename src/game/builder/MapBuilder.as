@@ -24,9 +24,9 @@ public class MapBuilder extends MovieClip {
             var child:MovieClip = game.world.map.getChildAt(i) as MovieClip;
             var handler:MovieClip;
 
-//            trace("TOGGLE => " + child.name);
-
             if (child != null && child is BuilderObjectDraggable) {
+
+                trace("TOGGLE => " + child.name);
 
                 if (child.typ == "Arrow") {
                     handler = child.getChildByName("handler") as MovieClip;
@@ -35,8 +35,9 @@ public class MapBuilder extends MovieClip {
                         child.mouseChildren = visible;
                         child.mouseEnabled = visible;
                     }
-                } else if (child.typ == "Mining") {
-//                    trace("MINING => " + child.name);
+                } else if (child.typ == "Resource") {
+                    trace("Resource => " + child.name + " => VISIBLE => " + (!visible));
+
                     handler = child.getChildByName("handler") as MovieClip;
                     if (handler != null) {
                         handler.visible = visible;
@@ -71,32 +72,39 @@ public class MapBuilder extends MovieClip {
                 addForm(element, data);
                 ApplyLock(element);
 
-                if (data.type == "Arrow") {
-                    element.getChildByName("handler").visible = false;
-                    element.getChildByName("form").visible = false;
-                    element.mouseChildren = false;
-                    element.mouseEnabled = false;
-                }
-                else if (data.type == "Mining")
-                {
-                    element.getChildByName("handler").visible = false;
-                    element.getChildByName("form").visible = false;
-                    element.bLock = true;
-                }
             }
 
-//            trace("CREATE ELEMENT => " + element.name);
+            if (data.type == "Arrow") {
+                element.getChildByName("handler").visible = false;
+                element.getChildByName("form").visible = false;
+                element.mouseChildren = false;
+                element.mouseEnabled = false;
+            }
+            else if (data.type == "Resource")
+            {
+                element.getChildByName("handler").visible = false;
+                element.getChildByName("form").visible = false;
+                element.bLock = true;
+                element.init();
+            }
+
+            trace("CREATE ELEMENT => " + element.name);
 
             game.world.map.addChild(element);
         } catch (e:Error) {
-            trace("Error creating this data: " + JSON.stringify(data));
-            game.world.game.chatF.pushMsg("warning", "Error creating [" + data.type + "] element!", "SERVER", "", 0);
+            if (game.world.myAvatar.isStaff())
+            {
+                trace("Error creating this data: " + JSON.stringify(data));
+                game.world.game.chatF.pushMsg("warning", "Error creating [" + data.type + "] element!", "SERVER", "", 0);
+            }
         }
     }
 
     private function createBaseElement(typ:String, data:Object):MovieClip {
         var elementClass:Class = getElementClass(typ);
         var element:MovieClip = new elementClass();
+
+        trace("CREATE BASE ELEMENT => " + typ + " => " + JSON.stringify(data));
 
         element.name = typ + "-" + generateUniqueId();
         element.typ = typ;
@@ -148,16 +156,21 @@ public class MapBuilder extends MovieClip {
                 if (data.flip == "Vertical") element.shadow.scaleX *= -1;
                 if (data.flip == "Horizontal") element.shadow.scaleY *= -1;
                 break;
-            case "Mining":
+            case "Resource":
                 element.strLinkage = data.hasOwnProperty("strLinkage") ? data.strLinkage : data.strLinkage = "";
+                element.ResMapID = data.hasOwnProperty("resMapId") ? int(data.resMapId) : data.resMapId = -1;
 
                 try {
                     if (game.world.loaderD.hasDefinition(element.strLinkage))
                     {
                         var assetClass:Class = game.world.getClass(element.strLinkage);
-                        element.addChild(new (assetClass));
+                        element.addChild(new (assetClass)());
                     }
                 } catch (e:Error) {
+                    if (game.world.myAvatar.isStaff())
+                    {
+                        game.world.game.chatF.pushMsg("warning", "Error loading resource linkage '" + element.strLinkage + "'!", "SERVER", "", 0);
+                    }
                 }
                 break;
             case "AttackIndicator":
@@ -168,7 +181,7 @@ public class MapBuilder extends MovieClip {
         return element;
     }
 
-    public function AttackIndicator(w:int = 100, h:int = 100, color:uint = 0xFF0000, alpha:Number = 0.4, shapeType:String = "circle", element:MovieClip = null) {
+    public function AttackIndicator(w:int = 100, h:int = 100, color:uint = 0xFF0000, alpha:Number = 0.4, shapeType:String = "circle", element:MovieClip = null) : void {
         var shape:Shape = new Shape();
         shape.graphics.beginFill(color, alpha);
 
@@ -199,7 +212,7 @@ public class MapBuilder extends MovieClip {
             "Npc": MapNpc,
             "Trap": MapTrap,
             "Arrow": MapArrow,
-            "Mining": MapMining,
+            "Resource": MapResource,
             "AttackIndicator": MapZone
         };
 
@@ -325,8 +338,8 @@ public class MapBuilder extends MovieClip {
                 { label: "Pos X", value: data.x, restriction: true },
                 { label: "Pos Y", value: data.y, restriction: true }
             ],
-            "Mining": [
-                { label: "MiningID", value: data.miningId, restriction: true },
+            "Resource": [
+                { label: "ResMapId", value: data.resMapId, restriction: true },
                 { label: "Linkage", value: data.strLinkage, restriction: false },
                 { label: "Text", value: data.text, restriction: false },
                 { label: "Message", value: data.message, restriction: false },
@@ -532,6 +545,9 @@ public class MapBuilder extends MovieClip {
 //                    return;
 //                }
                 element.shadow.height = newHeight;
+                break;
+            case "input-resmapid":
+                element.ResMapID = int(input.tInput.text);
                 break;
         }
     }

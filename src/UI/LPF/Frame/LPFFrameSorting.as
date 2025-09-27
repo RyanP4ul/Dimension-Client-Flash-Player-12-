@@ -22,7 +22,7 @@ public class LPFFrameSorting extends LPFFrame {
     {
         getLayout().unregisterFrame(this);
 
-        if (sorting.isOpen)
+        if (sorting != null && sorting.isOpen)
         {
             sorting.closeOption();
         }
@@ -35,7 +35,7 @@ public class LPFFrameSorting extends LPFFrame {
 
     protected function fDraw():void
     {
-        if (fData != null && fData.items != null)
+        if (sorting != null && fData != null && fData.items != null)
         {
             sorting.data = fData.items;
             sorting.currentOption = getLayout().game.preference.data.sSortType != null ? getLayout().game.preference.data.sSortType : "Default";

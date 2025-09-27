@@ -11,12 +11,11 @@ import UI.LPF.Frame.LPFFrameQtySelector;
 import UI.LPF.Frame.LPFFrameSimpleList;
 import UI.LPF.Frame.LPFFrameSimpleText;
 import UI.LPF.Frame.LPFFrameSlotDisplay;
-import UI.LPF.Frame.LPFFrameSorting;
+import UI.LPF.Frame.LPFFrameTestSort;
 
 import flash.geom.Point;
     import flash.display.MovieClip;
     import flash.events.MouseEvent;
-    import flash.text.*;
 
     public class LPFPanelMergeShop extends LPFPanel
     {
@@ -245,7 +244,7 @@ import flash.geom.Point;
             _local_4.fData = null;
             _local_4.r = {
                 "x":425,
-                "y":1,
+                "y":330,
                 "w":-1,
                 "h":-1
             };
@@ -253,7 +252,7 @@ import flash.geom.Point;
             addFrame(_local_4);
 
             _local_4 = {};
-            _local_4.frame = new LPFFrameSorting();
+            _local_4.frame = new LPFFrameTestSort();
             _local_4.fData = {
                 items: [
                     { name: "Default" },
@@ -264,7 +263,7 @@ import flash.geom.Point;
             };
 
             _local_4.r = {
-                "x":665,
+                "x":877,
                 "y":43,
                 "w":-1,
                 "h":-1

@@ -85,7 +85,9 @@ public class LPFElementListItemItem extends LPFElementListItem
             var nameText:String = "<font color='#FFFFFF'>" + fData.sName + "</font>";
 
             tNew.visible = (new Date().time - Number(fData.dPurchase) <= (5 * 60 * 1000));
-            ownedItem.visible = game.ui.mcPopup.currentLabel == "Loot" && game.world.myAvatar.IsOwned(false, fData.ItemID);
+            ownedItem.visible = (game.ui.mcPopup.currentLabel == "Loot" || game.ui.mcPopup.currentLabel == "Shop" || game.ui.mcPopup.currentLabel == "MergeShop") && game.world.myAvatar.IsOwned(false, fData.ItemID);
+
+            trace("fDraw > ListItem > MCPOPU LABEL > " + game.ui.mcPopup.currentLabel);
 
             if (fData.bUpg == 1) nameText = (("<font color='#FCC749'>" + fData.sName) + "</font>");
             if (fData.iLvl > uoLeaf.intLevel || fData.EnhLvl != null && fData.EnhLvl > uoLeaf.intLevel) nameText = (("<font color='#FF0000'>" + fData.sName) + "</font>");

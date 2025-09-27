@@ -5,17 +5,22 @@
 
 package UI.LPF.Frame
 {
-    import flash.display.MovieClip;
+import flash.display.DisplayObject;
+import flash.display.MovieClip;
     import flash.events.MouseEvent;
     import flash.text.*;
 
     public class LPFFrameGoldDisplay extends LPFFrame 
     {
 
-        public var mcCopper:MovieClip;
-        public var mcSilver:MovieClip;
-        public var mcGold:MovieClip;
         private var game:Game;
+        private var padding:int = 8;
+        private var gap:int = 4;
+        private var spacing:int = 8;
+        private var maxWidth:int = 250;
+
+        public var btnTestConvert:MovieClip;
+        public var bg:MovieClip;
 
         public function LPFFrameGoldDisplay():void
         {
@@ -34,43 +39,26 @@ package UI.LPF.Frame
             fDraw();
             positionBy(o.r);
             getLayout().registerForEvents(this, eventTypes);
-
-            mcCopper.addEventListener(MouseEvent.MOUSE_OVER, onCopperTTOver, false, 0, true);
-            mcCopper.addEventListener(MouseEvent.MOUSE_OUT, onTTOut, false, 0, true);
-
-            mcSilver.addEventListener(MouseEvent.MOUSE_OVER, onSilverTTOver, false, 0, true);
-            mcSilver.addEventListener(MouseEvent.MOUSE_OUT, onTTOut, false, 0, true);
-
-            mcGold.addEventListener(MouseEvent.MOUSE_OVER, onGoldTTOver, false, 0, true);
-            mcGold.addEventListener(MouseEvent.MOUSE_OUT, onTTOut, false, 0, true);
         }
 
         override public function fClose():void
         {
-            mcCopper.removeEventListener(MouseEvent.MOUSE_OVER, onCopperTTOver);
-            mcCopper.removeEventListener(MouseEvent.MOUSE_OUT, onTTOut);
-            mcSilver.removeEventListener(MouseEvent.MOUSE_OVER, onSilverTTOver);
-            mcSilver.removeEventListener(MouseEvent.MOUSE_OUT, onTTOut);
-            mcGold.removeEventListener(MouseEvent.MOUSE_OVER, onGoldTTOver);
-            mcGold.removeEventListener(MouseEvent.MOUSE_OUT, onTTOut);
             getLayout().unregisterFrame(this);
-
             if (parent != null) parent.removeChild(this);
         }
 
         private function fDraw():void
         {
-            mcCopper.ti.text = game.strNumWithCommas(fData.intCopper);
-            mcCopper.hit.width = mcCopper.ti.x + mcCopper.ti.textWidth + 2;
-            mcCopper.hit.alpha = 0;
+            for (var i:int = numChildren - 1; i >= 0; i--) {
+                var child:DisplayObject = getChildAt(i);
+                if (child && child.name && child.name.indexOf("_") != -1) {
+                    removeChildAt(i);
+                }
+            }
 
-            mcSilver.ti.text = game.strNumWithCommas(fData.intSilver);
-            mcSilver.hit.width = mcSilver.ti.x + mcSilver.ti.textWidth + 2;
-            mcSilver.hit.alpha = 0;
+            setCurrency(fData.intCopper, fData.intSilver, fData.intGold);
 
-            mcGold.ti.text = game.strNumWithCommas(fData.intGold);
-            mcGold.hit.width = mcGold.ti.x + mcGold.ti.textWidth + 2;
-            mcGold.hit.alpha = 0;
+            btnTestConvert.addEventListener(MouseEvent.CLICK, onTestConvertClick, false, 0, true);
         }
 
         override public function notify(_arg_1:Object):void
@@ -78,26 +66,90 @@ package UI.LPF.Frame
             if (_arg_1.eventType == "refreshCurrency") fDraw();
         }
 
-        private function onCopperTTOver(_arg_1:MouseEvent):void
+        private function onTestConvertClick(event:MouseEvent) : void
         {
-            game.ui.ToolTip.openWith({"str":"Copper"});
+            var copperToSilver:Number = game.statsController.intCopperToSilver;
+            var iMax:Number = (game.world.myAvatar.objData.intCopper / copperToSilver);
+
+            if (iMax < 1)
+            {
+                game.Modal("You do not have enough copper to convert.", null, {}, "red,medium");
+                return;
+            }
+
+            game.Modal(iMax == 1
+                    ? "<b>" + copperToSilver + " Copper = 1 Silver.</b> <br><br> You only have enough copper to convert to one silver. Do you wish to continue?"
+                    : "<b>" + copperToSilver + " Copper = 1 Silver.</b> <br><br> Please select the amount of silver you want.", ConvertCopperToSilver, {}, "white,medium", "dual", true, {
+                min:1,
+                max:iMax
+            });
         }
 
-        private function onSilverTTOver(_arg_1:MouseEvent):void
+        private function ConvertCopperToSilver(o:Object) : void
         {
-            game.ui.ToolTip.openWith({"str":"Silver"});
+            if (o.accept)
+            {
+                game.net.send("convertCopperToSilver", [o.hasOwnProperty("iQty") ? o.iQty : 1]);
+            }
         }
 
-        private function onGoldTTOver(_arg_1:MouseEvent):void
+        public function setCurrency(copper:int = 0, silver:int = 0, gold:int = 0):void
         {
-            game.ui.ToolTip.openWith({"str":"Gold"});
+            var xPos:int = padding;
+
+            xPos = addPart(gold, new CurrencyIconGold(), "_gold", xPos);
+            xPos = addPart(silver, new CurrencyIconSilver(), "_silver", xPos);
+            xPos = addPart(copper, new CurrencyIconCopper(), "_copper", xPos);
+
+            var totalW:int = xPos + padding;
+
+            if (totalW > maxWidth)
+            {
+                var scale:Number = maxWidth / totalW;
+                this.scaleX = scale;
+                this.scaleY = scale;
+                totalW = maxWidth;
+            }
+            else
+            {
+                this.scaleX = 1;
+                this.scaleY = 1;
+            }
         }
 
-        private function onTTOut(_arg_1:MouseEvent=null):void
+        private function addPart(amount:int, icon:MovieClip, name:String, xPos:int):int
         {
-            game.ui.ToolTip.close();
-        }
+            var tf:TextField = new TextField();
+            tf.name = "_cost";
+            tf.defaultTextFormat = new TextFormat("Calibri", 14, 0xFFFFFF);
+            tf.autoSize = "left";
+            tf.text = game.strNumWithCommas(amount); // amount.toString();
+            tf.selectable = false;
+            addChild(tf);
 
+            var expectedW:int = xPos + tf.textWidth + gap + icon.width;
+            if (expectedW > maxWidth)
+            {
+                // Shrink text only (reduce font size until it fits)
+                var size:int = 14;
+                while (expectedW > maxWidth && size > 8)
+                {
+                    size--;
+                    tf.setTextFormat(new TextFormat("Calibri", size, 0xFFFFFF));
+                    expectedW = xPos + tf.textWidth + gap + icon.width;
+                }
+            }
+
+            tf.x = xPos;
+            tf.y = padding - 5;
+
+            icon.name = name;
+            icon.x = tf.x + tf.width + gap;
+            icon.y = padding;
+            addChild(icon);
+
+            return icon.x + icon.width + spacing;
+        }
 
     }
 }//package 
