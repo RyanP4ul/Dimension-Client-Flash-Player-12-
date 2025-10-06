@@ -1401,37 +1401,6 @@ public class Game extends MovieClip {
         return (0);
     }
 
-    public function objectSort(sort:Array, target:Object) : Object
-    {
-        function customSort(a:String, b:String):int {
-            var indexA:int = sort.indexOf(a);
-            var indexB:int = sort.indexOf(b);
-
-            if (indexA < indexB) {
-                return -1;
-            } else if (indexA > indexB) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-        var sortedKeys:Array = [];
-
-        for (var key:String in target) {
-            sortedKeys.push(key);
-        }
-
-        sortedKeys.sort(customSort);
-
-        var sortedObject:Object = {};
-        for each (var sortedKey:String in sortedKeys) {
-            sortedObject[sortedKey] = target[sortedKey];
-        }
-
-        return sortedObject;
-    }
-
     public function convertBubbleText(_arg_1:String):String {
         var _local_2:String;
         _local_2 = world.myAvatar.objData.strUsername;
@@ -2937,8 +2906,8 @@ public class Game extends MovieClip {
                 loginInfo.userId = objLogin.userId;
                 loginInfo.strToken = objLogin.sToken;
 
-                mcLogin.gotoAndStop("Test");
-//                mcLogin.gotoAndStop(_characters.length > 0 ? "Characters" : "Create");
+//                mcLogin.gotoAndStop("Test");
+                mcLogin.gotoAndStop(_characters.length > 0 ? "Characters" : "Create");
             } else {
                 mcConnDetail.showError(response.sMsg);
             }
@@ -3614,7 +3583,7 @@ public class Game extends MovieClip {
         var _local_2:*;
         _local_1 = 0;
         _local_2 = 1;
-        while (_local_2 < 30) {
+        while (_local_2 < statsController.intMaxReputationRank) {
             _local_1 = Math.pow(_local_2 + 1, 3) * 100;
             if (_local_2 > 1) {
                 arrRanks.push(_local_1 + arrRanks[(_local_2 - 1)]);

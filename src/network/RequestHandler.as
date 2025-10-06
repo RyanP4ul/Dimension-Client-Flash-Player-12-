@@ -1089,6 +1089,7 @@ public class RequestHandler extends Object {
         game.world.intKillCount = o.intKillCount;
         game.world.objLock = o.objLock != null ? o.objLock : null;
         game.world.timeline = o.hasOwnProperty("timeline") ? o.timeline : null;
+		game.world.props = o.hasOwnProperty("props") ? o.props : null;
 
         if (o.hasOwnProperty("FloorDuration")) game.world.floorDuration = int(o.FloorDuration);
 
@@ -1115,8 +1116,6 @@ public class RequestHandler extends Object {
         }
 
 		game.world.resources = o.hasOwnProperty("resources") ? o.resources : [];
-
-        trace("Resources => " + JSON.stringify(game.world.resources));
 
         game.world.isFloor = Boolean(o.isFloor);
         game.world.isDungeon = Boolean(o.isDungeon);

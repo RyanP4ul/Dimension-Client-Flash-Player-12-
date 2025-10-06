@@ -40,6 +40,7 @@ import game.builder.MapBuilder;
 import game.builder.MapWalkable;
 import game.config.ConfigurationData;
 import game.handler.DisplayHandler;
+import game.utils.Queue;
 
 import popup.Stats.StatsListItem;
 import popup.Stats.StatsSubItem;
@@ -84,93 +85,99 @@ public dynamic class game_1_cnt_6 extends MovieClip
         private function Characters(): void { stop(); }
         private function CreateCharacter(): void { stop(); }
 
-        public var bg;
+        private var data:Object = {
+            "1": {
+                "Name": "Iron",
+                "Linkage": "Iron",
+                "PropMapID": 1,
+                "File": "Iron.swf"
+            },
+            "2": {
+                "Name": "Flower",
+                "Linkage": "Flower1",
+                "PropMapID": 2,
+                "File": "Flower1_r2.swf"
+            },
+            "r-2": {
+                "Name": "Tree",
+                "Linkage": "Tree1",
+                "File": "Tree1.swf"
+            }
+        };
 
-        private var padding:int = 8;
-        private var gap:int = 4; // space between number and icon
-        private var spacing:int = 8; // space between different currencies
-        private var maxWidth:int = 300;
+        public var queue:Queue = new Queue();
+        public var loaderD:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
+        public var loaderC:LoaderContext = new LoaderContext(false, loaderD);
 
         private function Test(): void {
-            setCurrency(5, 0, 0);
+            for each (var o:Object in data)
+            {
+                trace("Test > " + o.File + ", " + o.Linkage);
+                queue.add("props/" + o.File, o.Linkage, function():void {
+
+                    trace("Loaded > " + queue.File + ", " + queue.Linkage + " (" + queue.Count + " left)");
+
+                    if (queue.Count == 0)
+                    {
+                        var assetClass:Class = loaderD.getDefinition("Iron") as Class;
+                        var prop:MovieClip = new (assetClass);
+                        prop.y = 300;
+                        addChild(prop);
+
+                        var assetClass1:Class = loaderD.getDefinition("Flower1") as Class;
+                        var prop1:MovieClip = new (assetClass1);
+                        prop1.x = 400;
+                        prop1.y = 300;
+                        addChild(prop1);
+
+                        var assetClass2:Class = loaderD.getDefinition("Tree1") as Class;
+                        var prop2:MovieClip = new (assetClass2);
+                        prop2.x = 700;
+                        prop2.y = 300;
+                        addChild(prop2);
+
+                        trace("ALL DONE!");
+                    }
+
+                    queue.next();
+
+                }, null, loaderC);
+            }
             stop();
         }
 
-        public function setCurrency(copper:int = 0, silver:int = 0, gold:int = 0):void
-        {
-            // Remove old children except background
-//            while (numChildren > 1) removeChildAt(1);
-
-            var xPos:int = padding;
-            if (gold > 0)  xPos = addPart(gold, new CurrencyIconGold(), xPos);
-            if (silver > 0) xPos = addPart(silver, new CurrencyIconSilver(), xPos);
-            if (copper > 0) xPos = addPart(copper, new CurrencyIconCopper(), xPos);
-
-            // If all are zero, show "0" + copper icon
-            if (gold == 0 && silver == 0 && copper == 0)
-                xPos = addPart(0, new CurrencyIconCopper(), xPos);
-
-            var totalW:int = xPos + padding;
-
-            if (totalW > maxWidth)
-            {
-                var scale:Number = maxWidth / totalW;
-                this.scaleX = scale;
-                this.scaleY = scale;
-                totalW = maxWidth;
-            }
-            else
-            {
-                this.scaleX = 1;
-                this.scaleY = 1;
-            }
-
-            bg.width = totalW;
-            bg.height = 35;
-            bg.x = 0;
-            bg.y = 0;
-        }
-
-        private function addPart(amount:int, icon:MovieClip, xPos:int):int
-        {
-            var tf:TextField = new TextField();
-            tf.defaultTextFormat = new TextFormat("Calibri", 14, 0xFFFFFF);
-            tf.autoSize = "left";
-            tf.text = amount.toString();
-            tf.selectable = false;
-            addChild(tf);
-
-            var expectedW:int = xPos + tf.textWidth + gap + icon.width;
-            if (expectedW > maxWidth)
-            {
-                // Shrink text only (reduce font size until it fits)
-                var size:int = 14;
-                while (expectedW > maxWidth && size > 8)
-                {
-                    size--;
-                    tf.setTextFormat(new TextFormat("Calibri", size, 0xFFFFFF));
-                    expectedW = xPos + tf.textWidth + gap + icon.width;
-                }
-            }
-
-            tf.x = xPos;
-            tf.y = padding;
-
-            icon.x = tf.x + tf.width + gap;
-            icon.y = padding + 5;
-            addChild(icon);
-
-            return icon.x + icon.width + spacing; // new xPos for next currency
-        }
-
-//        private function drawBackground(w:int, h:int):void
-//        {
-//            bg.graphics.clear();
-//            bg.graphics.beginFill(0x333333, 0.8);
-//            bg.graphics.drawRoundRect(0, 0, w + padding, h, 8, 8);
-//            bg.graphics.endFill();
+//        private function Test(): void {
+//            rewardLists = new MovieClip();
+//            rewardLists.x = 0;
+//            rewardLists.y = 0;
+//            addChild(rewardLists);
+//
+//            rewardObject = Game.root.objectSort(["Static", "Choice", "Roll", "Random"], rewardObject);
+//
+//            for (var i:String in rewardObject)
+//            {
+//                trace(i);
+//                var property : MovieClip = reward["reward" + i];
+//                property.visible = true;
+//                property.y = (rewardLists.numChildren * 47) + 15;
+//                rewardLists.addChild(property);
+//
+//                var ct:int = 0;
+//
+//                for (var j:String in rewardObject[i])
+//                {
+//                    var cnt:DFrameMCcnt = new DFrameMCcnt();
+//
+//                    cnt.x = 0;
+//                    cnt.y = (ct * 47);
+//                    ct++;
+//
+//                    rewardLists.addChild(cnt);
+//                }
+//            }
+//
+//            stop();
 //        }
-
 
     }
 }//package Game_fla

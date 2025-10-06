@@ -87,8 +87,6 @@ public class LPFElementListItemItem extends LPFElementListItem
             tNew.visible = (new Date().time - Number(fData.dPurchase) <= (5 * 60 * 1000));
             ownedItem.visible = (game.ui.mcPopup.currentLabel == "Loot" || game.ui.mcPopup.currentLabel == "Shop" || game.ui.mcPopup.currentLabel == "MergeShop") && game.world.myAvatar.IsOwned(false, fData.ItemID);
 
-            trace("fDraw > ListItem > MCPOPU LABEL > " + game.ui.mcPopup.currentLabel);
-
             if (fData.bUpg == 1) nameText = (("<font color='#FCC749'>" + fData.sName) + "</font>");
             if (fData.iLvl > uoLeaf.intLevel || fData.EnhLvl != null && fData.EnhLvl > uoLeaf.intLevel) nameText = (("<font color='#FF0000'>" + fData.sName) + "</font>");
             if (bLimited && fData.iQtyRemain <= 0) nameText = (("<font color='#666666'>" + fData.sName) + "</font>");
@@ -130,6 +128,20 @@ public class LPFElementListItemItem extends LPFElementListItem
                     tLevel.visible = false;
                 }
             }
+			
+			if (fData.hasOwnProperty("glow"))
+			{
+				try {
+					var glow:GlowFilter = new GlowFilter();
+					glow.color = fData.glow.Color;
+					glow.alpha = Number(fData.glow.Alpha);
+					glow.blurX = Number(fData.glow.BlurX);
+					glow.blurY = Number(fData.glow.BlurY);
+					glow.strength = Number(fData.glow.Strength);
+					tName.filters = [glow];
+				} catch(e) {
+				}
+			}
 
 			tName.htmlText = nameText;
 

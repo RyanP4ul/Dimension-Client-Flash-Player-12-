@@ -20,34 +20,49 @@ public class MapBuilder extends MovieClip {
 
         visible = !visible;
 
+        var child:MovieClip;
+
         for (var i:int = 0; i < game.world.map.numChildren; i++) {
-            var child:MovieClip = game.world.map.getChildAt(i) as MovieClip;
-            var handler:MovieClip;
+            child = game.world.map.getChildAt(i) as MovieClip;
 
             if (child != null && child is BuilderObjectDraggable) {
-
-                trace("TOGGLE => " + child.name);
-
-                if (child.typ == "Arrow") {
-                    handler = child.getChildByName("handler") as MovieClip;
-                    if (handler != null) {
-                        handler.visible = visible;
-                        child.mouseChildren = visible;
-                        child.mouseEnabled = visible;
-                    }
-                } else if (child.typ == "Resource") {
-                    trace("Resource => " + child.name + " => VISIBLE => " + (!visible));
-
-                    handler = child.getChildByName("handler") as MovieClip;
-                    if (handler != null) {
-                        handler.visible = visible;
-                        child.getChildByName("form").visible = false;
-                        child.bLock = !visible;
-                    }
-                } else {
-                    child.visible = visible;
-                }
+                toggleVisibility(child);
             }
+        }
+
+
+        for (var k:int = 0; k < game.world.CHARS.numChildren; k++) {
+            child = game.world.CHARS.getChildAt(k) as MovieClip;
+
+            if (child != null && child is BuilderObjectDraggable) {
+                toggleVisibility(child);
+            }
+        }
+
+
+    }
+
+    private function toggleVisibility(child:MovieClip):void {
+        var handler:MovieClip;
+
+        if (child.typ == "Arrow") {
+            handler = child.getChildByName("handler") as MovieClip;
+            if (handler != null) {
+                handler.visible = visible;
+                child.mouseChildren = visible;
+                child.mouseEnabled = visible;
+            }
+        } else if (child.typ == "Resource" || child.typ == "Prop") {
+            trace("Resource | Prop => " + child.name + " => VISIBLE => " + (!visible));
+
+            handler = child.getChildByName("handler") as MovieClip;
+            if (handler != null) {
+                handler.visible = visible;
+                child.getChildByName("form").visible = false;
+                child.bLock = !visible;
+            }
+        } else {
+            child.visible = visible;
         }
     }
 
@@ -71,7 +86,6 @@ public class MapBuilder extends MovieClip {
                 addHandler(element, data);
                 addForm(element, data);
                 ApplyLock(element);
-
             }
 
             if (data.type == "Arrow") {
@@ -87,10 +101,16 @@ public class MapBuilder extends MovieClip {
                 element.bLock = true;
                 element.init();
             }
+            else if (data.type == "Prop")
+            {
+                element.getChildByName("handler").visible = false;
+                element.getChildByName("form").visible = false;
+                element.bLock = true;
+            }
 
             trace("CREATE ELEMENT => " + element.name);
 
-            game.world.map.addChild(element);
+            (data.type == "Resource" || data.type == "Prop") ? game.world.CHARS.addChild(element) : game.world.map.addChild(element);
         } catch (e:Error) {
             if (game.world.myAvatar.isStaff())
             {
@@ -157,19 +177,52 @@ public class MapBuilder extends MovieClip {
                 if (data.flip == "Horizontal") element.shadow.scaleY *= -1;
                 break;
             case "Resource":
-                element.strLinkage = data.hasOwnProperty("strLinkage") ? data.strLinkage : data.strLinkage = "";
                 element.ResMapID = data.hasOwnProperty("resMapId") ? int(data.resMapId) : data.resMapId = -1;
 
                 try {
-                    if (game.world.loaderD.hasDefinition(element.strLinkage))
+                    var resource:Object = game.world.resources[element.ResMapID];
+
+                    if (!resource) return element;
+
+                    if (game.world.loaderD.hasDefinition(resource.Linkage))
                     {
-                        var assetClass:Class = game.world.getClass(element.strLinkage);
-                        element.addChild(new (assetClass)());
+                        var assetClass:Class = game.world.getClass(resource.Linkage);
+                        var asset:MovieClip = new (assetClass)();
+                        asset.name = "asset";
+                        element.addChild(asset);
                     }
                 } catch (e:Error) {
                     if (game.world.myAvatar.isStaff())
                     {
-                        game.world.game.chatF.pushMsg("warning", "Error loading resource linkage '" + element.strLinkage + "'!", "SERVER", "", 0);
+                        game.world.game.chatF.pushMsg("warning", "Error loading resource linkage!", "SERVER", "", 0);
+                    }
+                }
+                break;
+            case "Prop":
+                element.PropMapID = data.hasOwnProperty("propMapId") ? int(data.propMapId) : data.propMapId = -1;
+                element.Scale = data.hasOwnProperty("scale") ? data.scale : data.scale = 1.0;
+
+                try {
+                    trace("PropMapID: " + element.PropMapID);
+                    trace("Scale: " + element.Scale);
+
+                    var prop:Object = game.world.props[element.PropMapID];
+                    if (!prop)
+                    {
+                        if (game.world.myAvatar.isStaff())
+                            game.Modal("Data does not exist!", null, {}, "red,medium", "mono");
+                        return element;
+                    }
+
+                    trace("Prop: " + JSON.stringify(prop));
+                    var assetClass1:Class = game.world.getClass(prop.Linkage);
+                    var asset1:MovieClip = new (assetClass1)();
+                    asset1.scaleX = asset1.scaleY = Number(element.Scale);
+                    element.addChild(asset1);
+                } catch (e:Error) {
+                    if (game.world.myAvatar.isStaff())
+                    {
+                        game.world.game.chatF.pushMsg("warning", "Error loading resource linkage '" + prop.Linkage + "'!", "SERVER", "", 0);
                     }
                 }
                 break;
@@ -213,6 +266,7 @@ public class MapBuilder extends MovieClip {
             "Trap": MapTrap,
             "Arrow": MapArrow,
             "Resource": MapResource,
+            "Prop": MapProp,
             "AttackIndicator": MapZone
         };
 
@@ -343,6 +397,11 @@ public class MapBuilder extends MovieClip {
                 { label: "Linkage", value: data.strLinkage, restriction: false },
                 { label: "Text", value: data.text, restriction: false },
                 { label: "Message", value: data.message, restriction: false },
+                { label: "Pos X", value: data.x, restriction: true },
+                { label: "Pos Y", value: data.y, restriction: true }
+            ],
+            "Prop": [
+                { label: "PropMapId", value: data.propMapId, restriction: true },
                 { label: "Pos X", value: data.x, restriction: true },
                 { label: "Pos Y", value: data.y, restriction: true }
             ],
@@ -482,7 +541,17 @@ public class MapBuilder extends MovieClip {
                 break;
             case "btnRemove":
                 game.Modal("Are you sure you want to remove this map element?", function (o:Object):void {
-                    if (o.accept) game.world.map.removeChild(target);
+                    if (o.accept)
+                    {
+                        if (target is MapProp || target is MapResource)
+                        {
+                            game.world.CHARS.removeChild(target);
+                        }
+                        else
+                        {
+                            game.world.map.removeChild(target);
+                        }
+                    }
                 }, {}, "white,medium");
                 break;
         }

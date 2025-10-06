@@ -46,6 +46,7 @@ public class StatController {
 
     public var intCopperToSilver:Number;
     public var intSilverToGold:Number;
+	public var intMaxReputationRank:Number;
 
     public var stats:Array = ["STR", "END", "DEX", "INT", "WIS", "LCK"];
     public var orderedStats:Array = ["STR", "INT", "DEX", "WIS", "END", "LCK"];
@@ -621,6 +622,10 @@ public class StatController {
         }
         if (o.intSilverToGold != null) {
             intSilverToGold = o.intSilverToGold;
+        }
+		
+		if (o.intMaxReputationRank != null) {
+            intMaxReputationRank = o.intMaxReputationRank;
         }
     }
 

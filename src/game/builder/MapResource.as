@@ -4,37 +4,66 @@ import flash.events.Event;
 import flash.events.MouseEvent;
 import flash.filters.GlowFilter;
 import flash.text.TextField;
+import flash.text.TextFieldAutoSize;
 import flash.text.TextFormat;
+
+import flashx.textLayout.formats.TextAlign;
 
 dynamic public class MapResource extends BuilderObjectDraggable {
 
     public var shadow:MovieClip;
+    public var isProp:Boolean = true;
     public var ResMapID:int = -1;
     public var Quantity:int = 1;
 
+    private var resource:Object = null;
     private var isMining:Boolean = false;
     private var miningInteraction:MapButtonInteract;
     private var tQuantity:TextField;
+    private var asset:MovieClip;
 
     public function MapResource() {
         SetBaseMc(shadow);
         shadow.visible = game.mapBuilder.visible;
+        mouseEnabled = false;
+//        mouseChildren = false;
+    }
 
-        // DISPLAY TEXT QUANTITY
+    public function init() :void
+    {
+        asset = MovieClip(getChildByName("asset"));
+
+        if (!asset)
+        {
+            if (game.world.myAvatar.isStaff())
+                game.Modal("Asset MovieClip not found!", null, {}, "red,medium", "mono");
+            return;
+        }
+
+        resource = game.world.resources[ResMapID];
+
+        if (!resource) {
+            if (game.world.myAvatar.isStaff())
+                game.Modal("Resource Map ID " + ResMapID + " dont have data!", null, {}, "red,medium", "mono");
+            return;
+        }
+
+        asset.mouseEnabled = false;
+        asset.mouseChildren = false;
+
         tQuantity = new TextField();
         tQuantity.defaultTextFormat = new TextFormat("Space Mono", 14, 0xFFFFFF);
-        tQuantity.autoSize = "left";
-        tQuantity.text = Quantity;
+        tQuantity.autoSize = TextFieldAutoSize.CENTER;
+        tQuantity.text = resource && resource.hasOwnProperty("Name") ? String(resource.Name) : "Unknown";
         tQuantity.selectable = false;
-        tQuantity.height = height + 10;
-        tQuantity.x = (width - tQuantity.width) / 2;
+        tQuantity.x = asset.x - (tQuantity.width / 2); //-(asset.width / 2 + tQuantity.width);
+        tQuantity.y = -(asset.height + tQuantity.height);
         tQuantity.visible = false;
         addChild(tQuantity);
 
-        // DISPLAY BUTTON INTERACT TO TRIGGER MINING
         miningInteraction = new MapButtonInteract();
-        miningInteraction.x = miningInteraction.width + width / 2;
-        miningInteraction.y = tQuantity.height + 5;
+        miningInteraction.x = asset.x - (miningInteraction.width / 2);
+        miningInteraction.y = -(asset.height + miningInteraction.height + tQuantity.height);
         miningInteraction.buttonMode = true;
         miningInteraction.visible = false;
 
@@ -42,17 +71,13 @@ dynamic public class MapResource extends BuilderObjectDraggable {
         miningInteraction.addEventListener(MouseEvent.CLICK, onClick, false, 0, true);
 
         addChild(miningInteraction);
+
+        asset.addEventListener(Event.ENTER_FRAME, onCheckCollision)
     }
 
-    public function init() :void
-    {
-        removeEventListener(Event.ENTER_FRAME, checkCollision);
-        addEventListener(Event.ENTER_FRAME, checkCollision);
-    }
-
-    private function checkCollision(e:Event):void {
+    private function onCheckCollision(e:Event):void {
         try {
-            if (this.hitTestObject(game.world.myAvatar.pMC.shadow)) {
+            if (asset.hitTestObject(game.world.myAvatar.pMC.shadow)) {
                 miningInteraction.visible = true;
                 tQuantity.visible = true;
             } else {
@@ -61,57 +86,67 @@ dynamic public class MapResource extends BuilderObjectDraggable {
                 isMining = false;
             }
         } catch (e:Error) {
-            if (this.hasEventListener(Event.ENTER_FRAME)) {
-                this.removeEventListener(Event.ENTER_FRAME, checkCollision);
+            if (asset.hasEventListener(Event.ENTER_FRAME)) {
+                asset.removeEventListener(Event.ENTER_FRAME, onCheckCollision);
             }
         }
     }
 
     private function onClick(event:MouseEvent) : void {
-        if (isMining || !miningInteraction.visible || !game.world.resources.hasOwnProperty(String(ResMapID))) return;
+        if (isMining || !miningInteraction.visible || !resource) return;
 
-        var resource:Object = game.world.resources[ResMapID];
         var xtObj:Object = {
             cmd: "resource",
             args: [ResMapID, Quantity]
         };
 
-        if (resource.Type == "Mining")
-        {
-            game.world.myAvatar.pMC.mcChar.gotoAndPlay("Mining");
+        game.world.myAvatar.pMC.mcChar.gotoAndPlay(resource.Animation);
 
-            game.ui.mcCastBar.fOpenWith({
-                typ: "generic",
-                dur: 10,
-                repeat: true,
-                txt: "Mining...",
-                msg: "Success",
-                callback: onCallBack,
-                args: {},
-                xtObj: xtObj
-            });
-        }
-        else if (resource.Type == "Collect")
-        {
-            game.world.myAvatar.pMC.mcChar.gotoAndPlay("Use");
+        game.ui.mcCastBar.fOpenWith({
+            typ: "generic",
+            dur: Number(resource.Duration),
+            repeat: Boolean(resource.Repeat),
+            txt: resource.Text,
+            msg: resource.Message,
+            callback: function (o:Object):void {
+                trace("CALL BACK!");
+            },
+            args: {},
+            xtObj: xtObj
+        });
 
-            game.ui.mcCastBar.fOpenWith({
-                typ: "generic",
-                dur: 10,
-                repeat: true,
-                txt: "Collecting...",
-                msg: "Success",
-                callback: onCallBack,
-                args: {},
-                xtObj: xtObj
-            });
-        }
+//        if (resource.Type == "Mining")
+//        {
+//            game.world.myAvatar.pMC.mcChar.gotoAndPlay("Mining");
+//
+//            game.ui.mcCastBar.fOpenWith({
+//                typ: "generic",
+//                dur: Number(resource.Mining),
+//                repeat: Boolean(resource.Repeat),
+//                txt: resource.Text,
+//                msg: resource.Message,
+//                callback: onCallBack,
+//                args: {},
+//                xtObj: xtObj
+//            });
+//        }
+//        else if (resource.Type == "Collect")
+//        {
+//            game.world.myAvatar.pMC.mcChar.gotoAndPlay("Use");
+//
+//            game.ui.mcCastBar.fOpenWith({
+//                typ: "generic",
+//                dur: 10,
+//                repeat: true,
+//                txt: "Collecting...",
+//                msg: "Success",
+//                callback: onCallBack,
+//                args: {},
+//                xtObj: xtObj
+//            });
+//        }
 
         isMining = true;
-    }
-
-    private function onCallBack(o:Object):void {
-        trace("CALL BACK!");
     }
 
 }

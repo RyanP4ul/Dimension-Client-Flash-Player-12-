@@ -15,16 +15,16 @@ public class Queue {
     public function Queue() : void {
         _queue = [];
         _isLoading = false;
-
     }
 
-    public function get Count() : Number { return _count; }
+    public function get Count() : Number { return _queue.length; }
     public function get File() : String { return _file; }
     public function get Linkage() : String { return _linkage; }
+    public function get HasNext() : Boolean { return _queue.length > 0; }
 
     public function add(file:String, linkage:String, onComplete:Function, onProgress:Function, context:LoaderContext):void {
         _file = file;
-        _linkage = file;
+        _linkage = linkage;
 
         _queue.push({
             file: _file,
@@ -48,7 +48,8 @@ public class Queue {
             _file = item.file;
             _linkage = item.linkage;
             _isLoading = true;
-            game.onLoadMaster(item.onComplete, item.context, item.file, item.onProgress, item.onError);
+
+            game.onLoadMaster(item.onComplete, Game.root.world.loaderC, item.file, item.onProgress, item.onError);
         } else {
             _isLoading = false;
         }

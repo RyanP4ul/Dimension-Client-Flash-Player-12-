@@ -54,7 +54,7 @@ public class Quests extends MovieClip {
     private var _currentSelectItem:DFrameMCcnt;
     private var _previousSelectItem:DFrameMCcnt;
 
-    private var _rewardType:Array = ["S", "C", "R"];
+    private var _rewardTypeOrder:Array = ["Static", "Choice", "Roll", "Random"];
 
     public function Quests() {
         emptyLists.visible = false;
@@ -255,6 +255,12 @@ public class Quests extends MovieClip {
                 case "Monthly":
                     strNote += "Monthly Quests are only available once per month.";
                     break;
+				case "Limited":
+					strNote += "Limited Quests are no longer available.";
+					break;
+				default:
+					strNote += "Locked!";
+					break;
             }
         }
 
@@ -304,35 +310,36 @@ public class Quests extends MovieClip {
                 rewardObject[quest.Rewards[reward].rewardType].push(quest.Rewards[reward]);
             }
 
-            rewardObject = game.objectSort(_rewardType, rewardObject);
+            var sectionY:int = 0;
 
-            trace(JSON.stringify(rewardObject));
-
-            for (var i:String in rewardObject)
+            for (var i:String in _rewardTypeOrder)
             {
-                var property : MovieClip = preview["reward" + getRewardType(i)];
+                if (!rewardObject.hasOwnProperty(_rewardTypeOrder[i])) continue;
+
+                var property : MovieClip = preview["reward" + _rewardTypeOrder[i]];
                 property.visible = true;
-                property.y = (rewardLists.numChildren * 47) + 15;
+                property.x = 0;
+                property.y = sectionY;
                 rewardLists.addChild(property);
 
                 var ct:int = 0;
 
-                for (var j:String in rewardObject[i])
+                for (var j:String in rewardObject[_rewardTypeOrder[i]])
                 {
                     var cnt:DFrameMCcnt = new DFrameMCcnt();
 
-                    cnt.name = "r-" + rewardObject[i][j].Data.ItemID;
-                    cnt.data = rewardObject[i][j].Data;
-                    cnt.strName.text = rewardObject[i][j].Data.sName;
-                    cnt.strQ.text = "x" + int(rewardObject[i][j].iQty); // int(rewardObject[i][j].iQty) < 2 ? "" : "x" + int(rewardObject[i][j].iQty);
-                    cnt.strRate.text = int(rewardObject[i][j].iRate) + "%";
-                    cnt.strType.text = rewardObject[i][j].Data.sType;
+                    cnt.name = "r-" + rewardObject[_rewardTypeOrder[i]][j].Data.ItemID;
+                    cnt.data = rewardObject[_rewardTypeOrder[i]][j].Data;
+                    cnt.strName.text = rewardObject[_rewardTypeOrder[i]][j].Data.sName;
+                    cnt.strQ.text = "x" + int(rewardObject[_rewardTypeOrder[i]][j].iQty); // int(rewardObject[i][j].iQty) < 2 ? "" : "x" + int(rewardObject[i][j].iQty);
+                    cnt.strRate.text = int(rewardObject[_rewardTypeOrder[i]][j].iRate) + "%";
+                    cnt.strType.text = rewardObject[_rewardTypeOrder[i]][j].Data.sType;
 
                     cnt.buttonMode = true;
                     cnt.mouseEnabled = true;
                     cnt.mouseChildren = false;
 
-                    if (i == "C" && isAccepted && !hasRequirements)
+                    if (i == "Choice" && isAccepted && !hasRequirements)
                     {
                         cnt.addEventListener(MouseEvent.CLICK, function (event:MouseEvent) : void {
                             var item:DFrameMCcnt = DFrameMCcnt(event.currentTarget);
@@ -371,7 +378,7 @@ public class Quests extends MovieClip {
 
                     game.onRemoveChildren(cnt.icon);
 
-                    if (game.world.myAvatar.IsOwned(rewardObject[i][j].bHouse, rewardObject[i][j].ItemID)) {
+                    if (game.world.myAvatar.IsOwned(rewardObject[_rewardTypeOrder[i]][j].bHouse, rewardObject[_rewardTypeOrder[i]][j].ItemID)) {
                         var checkItem:detailedCheck = new detailedCheck();
                         checkItem.x = 20.75;
                         checkItem.y = 7.7;
@@ -379,7 +386,7 @@ public class Quests extends MovieClip {
                     }
 
                     try {
-                        assetClass = (game.world.getClass(rewardObject[i][j].Data.sIcon) as Class);
+                        assetClass = (game.world.getClass(rewardObject[_rewardTypeOrder[i]][j].Data.sIcon) as Class);
                         icon = cnt.icon.addChild(new (assetClass));
                     } catch (e:Error) {
                         assetClass = (game.world.getClass("iibag") as Class);
@@ -388,14 +395,31 @@ public class Quests extends MovieClip {
 
                     icon.scaleX = icon.scaleY = 0.6;
                     cnt.x = 0;// ct % 2 > 0 ? cnt.x + 185 : 0;
-                    cnt.y = (ct * 47); // (Math.floor(ct / 2) * 43) + 25;
-                    cnt.bg.filters = [new GlowFilter((game.world.rarity[rewardObject[i][j].iRty] != null ? game.world.rarity[rewardObject[i][j].iRty].Color : 0xFFFFFF), 1, 8, 8, 2, 1, false, false)];
+                    cnt.y = (ct * 49) + 20; // (Math.floor(ct / 2) * 43) + 25;
+                    cnt.bg.filters = [new GlowFilter((game.world.rarity[rewardObject[_rewardTypeOrder[i]][j].iRty] != null ? game.world.rarity[rewardObject[_rewardTypeOrder[i]][j].iRty].Color : 0xFFFFFF), 1, 8, 8, 2, 1, false, false)];
+
+                    property.addChild(cnt);
 
                     ct++;
-
-                    rewardLists.addChild(cnt);
                 }
+
+                sectionY += property.height + 13;
             }
+
+//            for (var i:String in rewardObject)
+//            {
+//                var property : MovieClip = preview["reward" + i];
+//                property.visible = true;
+//                property.y = (rewardLists.numChildren * 47) + 15;
+//                rewardLists.addChild(property);
+//
+//                var ct:int = 0;
+//
+//                for (var j:String in rewardObject[i])
+//                {
+//
+//                }
+//            }
 
             preview.addChild(rewardLists);
         }

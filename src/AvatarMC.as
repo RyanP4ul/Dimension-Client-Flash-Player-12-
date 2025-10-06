@@ -1407,6 +1407,9 @@ public class AvatarMC extends MovieClip {
                 return;
             }
 
+            prevX = this.x;
+            prevY = this.y;
+
             if (checkCollisions(prevX, prevY))
             {
                 this.x = prevX;
@@ -1415,8 +1418,6 @@ public class AvatarMC extends MovieClip {
                 return;
             }
 
-            prevX = this.x;
-            prevY = this.y;
 
             this.x = op.x + (tp.x - op.x) * elapsed;
             this.y = op.y + (tp.y - op.y) * elapsed;

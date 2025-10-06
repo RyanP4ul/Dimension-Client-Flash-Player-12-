@@ -47,6 +47,7 @@ import flash.utils.getQualifiedClassName;
 import flash.utils.getTimer;
 
 import game.builder.BuilderObjectDraggable;
+import game.builder.MapProp;
 
 import game.builder.MapWalkable;
 
@@ -117,9 +118,9 @@ public class World extends MovieClip {
     public var avatars:Object = {};
     public var myAvatar:Avatar;
     public var timeline:Object = null;
+    public var props:Object = null;
     public var mondef:Object;
     public var monmap:Array = [];
-    public var monswf:Array;
     public var monsters:Array = [];
 	public var resources:Object = {};
     public var npcdef:Array;
@@ -197,6 +198,7 @@ public class World extends MovieClip {
         }
     };
     public var mapLoadInProgress:Boolean = false;
+    public var mapEntered:Boolean = false;
     private var mapW:int = ConfigurationData.CLIENT_WIDTH;
     private var mapH:int = ConfigurationData.CLIENT_HEIGHT;
     private var mapNW:int = mapW;
@@ -869,37 +871,40 @@ public class World extends MovieClip {
             map = null;
         }
 
-        if (game.preference.data.cache.map.enabled && strFilename in game.cache.maps)
-        {
-            mapComplete(strFilename, MovieClip(game.cache.maps[strFilename]));
-        }
-        else
-        {
-            game.onLoadMaster(function (event:Event) : void {
-                mapComplete(strFilename, MovieClip(Loader(event.target.loader).content));
-            }, loaderC, ("maps/" + strFilename), onMapLoadProgress, onMapLoadError);
-        }
+        game.onLoadMaster(mapComplete, loaderC, ("maps/" + strFilename), onMapLoadProgress, onMapLoadError);
+
+//        if (game.preference.data.cache.map.enabled && strFilename in game.cache.maps)
+//        {
+//            mapComplete(strFilename, MovieClip(game.cache.maps[strFilename]));
+//        }
+//        else
+//        {
+//            game.onLoadMaster(function (event:Event) : void {
+//                mapComplete(strFilename, MovieClip(Loader(event.target.loader).content));
+//            }, loaderC, ("maps/" + strFilename), onMapLoadProgress, onMapLoadError);
+//        }
 
         game.clearPopups();
     }
 
-    private function mapComplete(strFilename:String, content:MovieClip) : void {
+    private function mapComplete(event:Event) : void {
         game.ui.visible = true;
         mapLoadInProgress = false;
-        map = content;
+        mapEntered = false;
+        map = MovieClip(Loader(event.target.loader).content);
         map.cacheAsBitmap = true;
         addChildAt(map, 0).x = 0;
         CHARS.x = 0;
 
-        if (game.preference.data.cache.map.enabled && !(strFilename in game.cache.maps))
-        {
-            if (game.cache.maps.length > game.preference.data.cache.map.max)
-            {
-                game.DictRemoveFirst(game.cache.maps);
-            }
-
-            game.cache.maps[strFilename] = content;
-        }
+//        if (game.preference.data.cache.map.enabled && !(strFilename in game.cache.maps))
+//        {
+//            if (game.cache.maps.length > game.preference.data.cache.map.max)
+//            {
+//                game.DictRemoveFirst(game.cache.maps);
+//            }
+//
+//            game.cache.maps[strFilename] = content;
+//        }
 
         resetSpawnPoint();
 
@@ -907,6 +912,8 @@ public class World extends MovieClip {
             initMonsters(mondef, monmap);
         } else if (npcmap != null && npcmap.length > 0) {
             initNpcs(npcdef, npcmap);
+        } else if (props != null) {
+            initProps();
         } else {
             enterMap();
         }
@@ -930,6 +937,10 @@ public class World extends MovieClip {
     }
 
     public function enterMap():void {
+        if (mapEntered) return;
+
+        mapEntered = true;
+
         var uotf:Object = uoTreeLeaf(game.net.myUserName);
 
         if (intType == 0 || returnInfo == null) {
@@ -966,23 +977,14 @@ public class World extends MovieClip {
         var mode:String = "normal";
         var scroll:Boolean = false;
 
-        var walkable:MapWalkable = new MapWalkable();
-        walkable.width = mapWidth;
-        walkable.height = mapHeight;
-        walkable.x = walkable.y = 0;
-        walkable.name = "walk";
-        map.walk = map.addChild(walkable);
-
-        for (var i:int = 0; i < map.numChildren; i++)
+        if (map.getChildByName("walk") == null)
         {
-            var child:DisplayObject = map.getChildAt(i);
-
-            if (child is MovieClip && child.name.indexOf("__props__") == 0)
-            {
-                MovieClip(child).isProp = true;
-                MovieClip(child).mouseEnabled = false;
-                MovieClip(child).mouseChildren = false;
-            }
+            var walkable:MapWalkable = new MapWalkable();
+            walkable.width = mapWidth;
+            walkable.height = mapHeight;
+            walkable.x = walkable.y = 0;
+            walkable.name = "walk";
+            map.walk = map.addChild(walkable);
         }
 
         if (timeline != null && timeline.hasOwnProperty(strFrame))
@@ -1661,8 +1663,9 @@ public class World extends MovieClip {
                     }
                 }
             }
-            if (((child is MovieClip) && (MovieClip(child).isProp))) {
-                oref = CHARS.addChild(child);
+
+            if (child is MovieClip && MovieClip(child).isProp || child.name.indexOf("__props__") == 0) {
+                oref = CHARS.addChild(child);// child is MapProp ? CHARS.addChild(MovieClip(child).shadow) : CHARS.addChild(child);
                 if (MovieClip(oref).isEvent) {
                     arrEvent.push(MovieClip(oref));
                     MovieClip(oref).isEvent = false;
@@ -4673,7 +4676,6 @@ public class World extends MovieClip {
         var prop:String;
 
         queue = new Queue();
-        monswf = [];
         monsters = [];
 
         for each (var mapMonster:Object in map)
@@ -4706,26 +4708,22 @@ public class World extends MovieClip {
             for (prop in definition)
             {
                 if (prop == "len") continue;
-
-                var strFile:String = definition[prop].strMonFileName;
-
-                queue.add("mon/" + strFile, String(definition[prop].strLinkage), function (event:Event) : void
-                {
-                    monswf.push("Leght");
-
-                    if (monswf.length == mondef.len)
-                    {
-                        initNpcs(npcdef, npcmap);
-                    }
-                    else
-                    {
-                        queue.next();
-                    }
-                }, function (event:ProgressEvent) : void {
-                    game.mcConnDetail.showConn("Loading Monster (" + queue.File.replace("mon/", "") + ") " + (int(event.bytesLoaded / event.bytesTotal) * 100) + "%");
-                }, game.cache.monsterContext);
+                queue.add("mon/" + definition[prop].strMonFileName, String(definition[prop].strLinkage), onMonsterComplete, onMonsterProgress, game.cache.monsterContext);
             }
         }
+    }
+
+    private function onMonsterComplete(event:Event) : void {
+        queue.next();
+
+        if (!queue.HasNext)
+        {
+            initNpcs(npcdef, npcmap);
+        }
+    }
+
+    private function onMonsterProgress(event:ProgressEvent) : void {
+        game.mcConnDetail.showConn("Loading Monster (" + queue.File.replace("mon/", "") + ") " + (int(event.bytesLoaded / event.bytesTotal) * 100) + "%");
     }
 
     public function initNpcs(md:Array, mp:Array):void {
@@ -4769,7 +4767,8 @@ public class World extends MovieClip {
 
         }
 
-        enterMap();
+        initProps();
+        
     }
 
 //    public function toggleMonsters():* {
@@ -4785,6 +4784,41 @@ public class World extends MovieClip {
 //            _local_2++;
 //        }
 //    }
+
+    public function initProps() : void {
+		trace("INIT PROPS > ====================================");
+        trace("PROPS DATA: " + JSON.stringify(props));
+        if (props == null)
+        {
+			enterMap();
+            return;
+        }
+
+		trace("===============================");
+		for each (var o:Object in props)
+		{
+            if (loaderD.hasDefinition(o.Linkage)) continue;
+            trace(o.Name);
+			queue.add("props/" + o.File, o.Linkage, onPropComplete, onPropProgress, loaderC);
+		}
+		trace("===============================");
+    }
+
+    private function onPropComplete(event:Event) : void {
+		        if (queue.Count == 0 && !mapEntered)
+        {
+            trace("Prop Enter Map");
+            enterMap();
+        }
+	
+//        trace("PROP COMPLETE 1 > " + queue.File + " > " + queue.Count);
+        queue.next();
+//		trace("PROP COMPLETE 2 > " + queue.File + " > " + queue.Count);
+    }
+
+    private function onPropProgress(event:ProgressEvent) : void {
+        game.mcConnDetail.showConn("Loading Prop (" + queue.File.replace("props/", "") + ") " + (int(event.bytesLoaded / event.bytesTotal) * 100) + "%");
+    }
 
     public function setTarget(_arg_1:*):* {
         if (myAvatar != null && !myAvatar.target != _arg_1) {
