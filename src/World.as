@@ -15,6 +15,21 @@ import UI.ModalMC;
 import com.greensock.TweenLite;
 import com.greensock.easing.Quad;
 
+import element.Dark;
+
+import element.Earth;
+
+import element.Fire;
+import element.Ice;
+import element.Light;
+import element.Lightning;
+import element.Nature;
+import element.Water;
+import element.Wind;
+
+import features.AnimationController;
+import features.AnimationEvent;
+
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.DisplayObject;
@@ -143,6 +158,10 @@ public class World extends MovieClip {
     public var scrollData:Object;
     public var loaderD:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
     public var loaderC:LoaderContext = new LoaderContext(false, loaderD);
+
+    public var loaderF:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
+    public var loaderE:LoaderContext = new LoaderContext(false, loaderF);
+
     public var loaderContents:* = [];
     public var loaderContentsFileNames:* = [];
     public var loaderQueue:Array = [];
@@ -478,10 +497,13 @@ public class World extends MovieClip {
     private var cooldownTargets:Array = [];
     private var frameHandlerActive:Boolean = false;
 
+    public var animationController:AnimationController;
+
     public function World(game:Game) {
         this.game = game;
         currentInstance = this;
-
+        loaderE.checkPolicyFile = false;
+        loaderE.allowCodeImport = true;
         SCROLL = false;
         bankController = new BankController();
         tradeController = new TradeController();
@@ -502,6 +524,8 @@ public class World extends MovieClip {
         this.addChild(zManager);
         FG = new MovieClip();
         this.addChild(FG);
+
+        animationController = new AnimationController(stage);
 
         zManager.removeEventListener(Event.ENTER_FRAME, onZmanagerEnterFrame);
         autoActionTimer.removeEventListener(TimerEvent.TIMER, autoActionHandler);
@@ -846,6 +870,13 @@ public class World extends MovieClip {
             }
         } catch (e:Error) {
         }
+		try {
+            c = (loaderF.getDefinition(assetLinkageID) as Class);
+            if (c != null) {
+                return (c);
+            }
+        } catch (e:Error) {
+        }
         trace();
         for (sES in playerDomains) {
             // trace("sES > " + sES);
@@ -1084,7 +1115,7 @@ public class World extends MovieClip {
 
                 exitCell();
 
-                if (isFloor)
+                if (isTimeline || isFloor)
                 {
                     map.gotoAndStop(frame);
                     initTimeline(frame);
@@ -1622,6 +1653,11 @@ public class World extends MovieClip {
 
                             if (Mon.dataLeaf == null) {
                                 TRASH.addChild(Mon.pMC);
+                            } else {
+                                if (Mon.pMC.pAV.objData.sRace != "Unknown")
+                                {
+                                    Mon.pMC.pname.typ.text = "<" + Mon.pMC.pAV.objData.sRace + ">";
+                                }
                             }
                         }
                     }
@@ -1941,10 +1977,14 @@ public class World extends MovieClip {
     }
 
     public function gotoHouse(_arg_1:String):void {
+        trace("gotoHouse > 1");
         _arg_1 = _arg_1.toLowerCase();
+        trace("gotoHouse > ARG 1 > " + _arg_1);
         if (((!(objHouseData == null)) && (objHouseData.unm == _arg_1))) {
+        trace("gotoHouse > RETURN");
             return;
         }
+        trace("gotoHouse > SUCCESS");
         game.net.send("house", [_arg_1]);
     }
 
@@ -2075,8 +2115,7 @@ public class World extends MovieClip {
             objHouseData.sHouseInfo = "";
             objHouseData.arrPlacement = [];
             initEquippedItems(objHouseData.arrPlacement);
-            sendSaveHouseSetup(objHouseData.sHouseInfo);
-            game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {"frame":"*"}, callbackC, callbackB, true);
+            game.requestAPI(URLRequestMethod.POST, "game/character/house-save", {"frame":"*"}, callbackC, callbackB, true);
         }
     }
 
@@ -2203,7 +2242,7 @@ public class World extends MovieClip {
         var _local_4:DisplayObject;
         var _local_5:*;
 
-        if (((isMyHouse()) && (!(myAvatar.houseitems == null))))
+        if (isMyHouse() && myAvatar.houseitems != null)
         {
             if (game.ui.mcPopup.mcHouseMenu.visible)
             {
@@ -2286,7 +2325,7 @@ public class World extends MovieClip {
 
     private function houseBounds(_arg_1:Event):void
     {
-        if (((((!(isMyHouse())) || (!(strFrame == houseFrame))) || (bitWalk)) || (!(strMapName == "house"))))
+        if (!isMyHouse() || strFrame != houseFrame || bitWalk || strMapName != "house")
         {
             houseFrame = "";
             this.removeEventListener(Event.ENTER_FRAME, houseBounds);
@@ -2534,7 +2573,7 @@ public class World extends MovieClip {
         var _local_2:String = imbalancedHouseCells.shift();
         game.mcConnDetail.showConn((("Upgrading room " + _local_2) + "..."), false, true);
         game.chatF.pushMsg("server", (("Saving room " + _local_2) + "..."), "SERVER", "", 0);
-        game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {
+        game.requestAPI(URLRequestMethod.POST, "game/character/house-save", {
             "frame":_local_2,
             "layout":objHouseData.sData[_local_2]
         }, callbackA, callbackB, true);
@@ -2767,7 +2806,7 @@ public class World extends MovieClip {
         var _local_2:*;
         game.mcConnDetail.showConn((("Converting frame " + activeCell) + " from legacy house data..."), false, true);
         game.chatF.pushMsg("server", (("Saving room " + activeCell) + "..."), "SERVER", "", 0);
-        game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {
+        game.requestAPI(URLRequestMethod.POST, "game/character/house-save", {
             "frame":activeCell,
             "layout":houseJson[activeCell]
         }, callbackA, callbackB, true);
@@ -2829,7 +2868,7 @@ public class World extends MovieClip {
         }
         objHouseData.arrPlacement[strFrame] = _local_2;
 
-        game.requestAPI(URLRequestMethod.POST, "game/character/HouseSaveRoom", {
+        game.requestAPI(URLRequestMethod.POST, "game/character/house-save", {
             "frame":strFrame,
             "layout":_local_2
         }, callbackA, callbackB, true);
@@ -2904,10 +2943,6 @@ public class World extends MovieClip {
             }
         }
         return (_local_2);
-    }
-
-    public function sendSaveHouseSetup(_arg_1:*):void {
-        game.net.send("housesave", [_arg_1]);
     }
 
     public function frameExists(_arg_1:String):Boolean
@@ -3362,12 +3397,31 @@ public class World extends MovieClip {
             avtPortrait.strHPBar.mouseEnabled = false;
             avtPortrait.strHPBar.text = "";
 
+            if (avtPortrait.getChildByName("Element") != null) avtPortrait.removeChild(avtPortrait.getChildByName("Element"));
+
             switch (avt.npcType) {
                 case "monster":
                     dataLeaf = monTree[avt.objData.MonMapID];
                     avtPortrait.strName.text = avt.objData.strMonName.toUpperCase();
                     avtPortrait.strHPBar.text = dataLeaf.intHPBar <= 1 ? "" : "x" + dataLeaf.intHPBar;
-                    avtPortrait.strClass.text = "Monster";
+                    avtPortrait.strClass.text = avt.objData.hasOwnProperty("sRace") && avt.objData.sRace != "Unknown" ? avt.objData.sRace :  "Monster";
+
+                    if (avt.objData.hasOwnProperty("sElmt"))
+                    {
+                        var mcElement:MovieClip = getElement(avt.objData.sElmt);
+
+                        if (mcElement != null)
+                        {
+                            mcElement.name = "Element";
+                            mcElement.width = 24;
+                            mcElement.height = 24;
+                            mcElement.x = -40;
+                            mcElement.y = 18;
+                            avtPortrait.addChild(mcElement);
+                        }
+
+                    }
+
                     if ("stars" in avtPortrait) {
                         numStars = int(Math.round((Math.pow((avt.objData.intLevel * 1.3), 0.5) / 2)));
                         j = 1;
@@ -3384,7 +3438,7 @@ public class World extends MovieClip {
 
                     if (("stars" in avtPortrait)) {
                         j = 1;
-                        while (j < 6) {
+                        while (j < 11) {
                             avtPortrait.stars.getChildByName(("s" + j)).visible = false;
                             j++;
                         }
@@ -3397,7 +3451,7 @@ public class World extends MovieClip {
 
                     if (("stars" in avtPortrait)) {
                         j = 1;
-                        while (j < 6) {
+                        while (j < 11) {
                             avtPortrait.stars.getChildByName(("s" + j)).visible = false;
                             j++;
                         }
@@ -4014,90 +4068,76 @@ public class World extends MovieClip {
     }
 
     public function equipUseableItem(itemObj:Object):void {
-        if (getAvailablePotionSlots() == "none") {
-            game.Modal("No available potion slots!", null, {}, "red,medium", "mono");
+        if (itemObj == null)
+        {
+            trace("itemObj is null");
             return;
         }
 
-        var actObj:Object = null;
-
-        for each (var action:Object in actions.active) {
-            if (!action) continue;
-
-            if ((action.ref == "i1" && !game.equipPotion1) || (action.ref == "i2" && !game.equipPotion2)) {
-                if (action.ref == "i1") game.equipPotion1 = true;
-                else game.equipPotion2 = true;
-
-                actObj = action;
-                break;
-            }
-        }
-
-        if (!actObj) return;
-
-        actObj.sArg1 = String(itemObj.ItemID);
-        actObj.sArg2 = String(itemObj.sDesc);
-
-        game.updateIcons(getActIcons(actObj), [itemObj.sFile], itemObj);
-        game.updateActionObjIcon(actObj);
-
-        for each (var item:Object in myAvatar.items) {
-            if (item.sType.toLowerCase() == "item" && item.sLink.toLowerCase() != "none" && item.ItemID == itemObj.ItemID && (!item.hasOwnProperty("bEquip") || item.bEquip == 0)) {
-                item.bEquip = 1;
-                item.bRef = actObj.ref;
-                game.net.send("geia", [actObj.ref, item.sMeta]);
-                break;
-            }
-        }
-
-        if (myAvatar.isMyAvatar) {
-            var inv:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcInventory"));
-            if (inv) inv.update({ eventType: "refreshItems" });
-        }
+        game.net.send("equipPotion", [itemObj.ItemID]);
+		
+//        if (getAvailablePotionSlots() == "none") {
+//            game.Modal("No available potion slots!", null, {}, "red,medium", "mono");
+//            return;
+//        }
+//
+//        var actObj:Object = null;
+//
+//        for each (var action:Object in actions.active) {
+//            if (!action) continue;
+//
+//            if ((action.ref == "i1" && !game.equipPotion1) || (action.ref == "i2" && !game.equipPotion2)) {
+//                if (action.ref == "i1") game.equipPotion1 = true;
+//                else game.equipPotion2 = true;
+//
+//                actObj = action;
+//                break;
+//            }
+//        }
+//
+//        if (!actObj) return;
+//
+//        actObj.sArg1 = String(itemObj.ItemID);
+//        actObj.sArg2 = String(itemObj.sDesc);
+//
+//        game.updateIcons(getActIcons(actObj), [itemObj.sFile], itemObj);
+//        game.updateActionObjIcon(actObj);
+//
+//        for each (var item:Object in myAvatar.items) {
+//            if (item.sType.toLowerCase() == "potion" && item.sLink.toLowerCase() != "none" && item.ItemID == itemObj.ItemID && (!item.hasOwnProperty("bEquip") || item.bEquip == 0)) {
+//                item.bEquip = 1;
+//                item.bRef = actObj.ref;
+//				game.net.send("equipPotion", [actObj.ref, item.sMeta, item.ItemID]);
+//                break;
+//            }
+//        }
+//
+//        if (myAvatar.isMyAvatar) {
+//            var inv:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcInventory"));
+//            if (inv) inv.update({ eventType: "refreshItems" });
+//        }
     }
 
     public function unequipUseableItem(itemObj:Object):void {
         if (itemObj == null) {
-            game.Modal("Unable to unequip!", null, {}, "red,medium", "mono");
+            game.Modal("Item does not exist!", null, {}, "red,medium", "mono");
             return;
         }
+		
+		var reference:String = null;
+		
+		for each (var action:Object in actions.active) {
+			if (!action || action.sArg1 != itemObj.ItemID) continue;
+			reference = action.ref;
+		}
 
-        var actObj:Object = null;
+		if (reference == null)
+		{
+			game.Modal("Unable to unequip potion!", null, {}, "red,medium", "mono");
+			return;
+		}
 
-        for each (var action:Object in actions.active) {
-            if (!action) continue;
-
-            var ref:String = action.ref;
-
-            if ((ref == "i1" && game.equipPotion1 && itemObj.bRef == "i1") || (ref == "i2" && game.equipPotion2 && itemObj.bRef == "i2")) {
-
-                if (ref == "i1") game.equipPotion1 = false;
-                else game.equipPotion2 = false;
-
-                actObj = action;
-                break;
-            }
-        }
-
-        if (!actObj) return;
-
-        var tempItemID:int = actObj.sArg1;
-
-        actObj.sArg1 = "";
-        actObj.sArg2 = "";
-        game.updateIcons(getActIcons(actObj), ["icu1"], null);
-
-        for each (var item:Object in myAvatar.items) {
-            if (item.sType.toLowerCase() == "item" && item.sLink.toLowerCase() != "none" && item.ItemID == tempItemID && item.bEquip == 1) {
-                item.bEquip = 0;
-                break;
-            }
-        }
-
-        if (myAvatar.isMyAvatar) {
-            var inv:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcInventory"));
-            if (inv) inv.update({ eventType: "refreshItems" });
-        }
+        game.net.send("unequipPotion", [itemObj.ItemID, reference]);
     }
 
 
@@ -4494,7 +4534,7 @@ public class World extends MovieClip {
             }
         }
 
-        monMC.name = monObj.strMonName;
+        monMC.name = monObj.strMonName + "-" + MonID;
         CHARS.addChild(monMC);
         monMC.x = monPad.x;
         monMC.y = monPad.y;
@@ -4525,6 +4565,9 @@ public class World extends MovieClip {
         if (("noMove" in monPad)) {
             monMC.noMove = monPad.noMove;
         }
+		if ("sRace" in monObj && monObj.sRace != "Unknown") {
+			monMC.pname.typ.text = "<" + monObj.sRace + ">";
+		}
         return (monMC);
     }
 
@@ -4707,19 +4750,18 @@ public class World extends MovieClip {
         {
             for (prop in definition)
             {
-                if (prop == "len") continue;
                 queue.add("mon/" + definition[prop].strMonFileName, String(definition[prop].strLinkage), onMonsterComplete, onMonsterProgress, game.cache.monsterContext);
             }
         }
     }
 
     private function onMonsterComplete(event:Event) : void {
-        queue.next();
-
         if (!queue.HasNext)
         {
             initNpcs(npcdef, npcmap);
         }
+
+        queue.next();
     }
 
     private function onMonsterProgress(event:ProgressEvent) : void {
@@ -5707,8 +5749,7 @@ public class World extends MovieClip {
         }
 
         // Check animation preferences
-        if (game.preference.data.bDisSkillAnim &&
-                (!game.preference.data.bAnimSelf || !cAvt.isMyAvatar)) {
+        if (game.preference.data.bDisSkillAnim && (!game.preference.data.bAnimSelf || !cAvt.isMyAvatar)) {
             if (cAvt.pMC) cAvt.pMC.clearSpFXQueue();
             return;
         }
@@ -5729,18 +5770,15 @@ public class World extends MovieClip {
                 case "c": // Chain effect
                     handleChainEffect(cAvt, spFX);
                     break;
-
                 case "f": // Funnel effect
                     handleFunnelEffect(cAvt, spFX);
                     break;
-
                 case "p": // Projectile effect
                 case "w": // World effect
                     handleStandardEffects(cAvt, spFX, spell, dur);
                     break;
             }
         } catch (e:Error) {
-            trace("Spell FX Error: " + e.message);
             if (cAvt && cAvt.pMC) cAvt.pMC.clearSpFXQueue();
         }
     }
@@ -6244,7 +6282,7 @@ public class World extends MovieClip {
         var i:int = 0;
         var a:Array = resObj.a;
         var displayType:String = null;
-        var displayData:Object = {};
+        var displayValue:String;
 
         while (i < a.length) {
             var o:Object = a[i];
@@ -6268,61 +6306,40 @@ public class World extends MovieClip {
             if (tMC != null && tMC.pAV != null && tMC.pAV.dataLeaf != null) {
                 switch (o.type) {
                     case "hit":
-                        displayType = "hitDisplay";
-                        displayData = int(o.hp) >= 0
-                                ? {
-                                    text: o.hp,
-                                    textColor: 0xFFFFFF
-                                }
-                                : {
-                                    text: "+" + Math.abs(o.hp) + "+",
-                                    textColor: 0xA6FF4D
-                                };
-
+                        displayType = int(o.hp) >= 0 ?  "HIT" : "HEAL";
+                        displayValue = String(o.hp);
                         wound(tMC, "damage");
                         break;
                     case "crit":
-                        displayType = "critDisplay";
-
-                        displayData = o.hp > 0
-                                ? {
-                                    text: o.hp,
-                                    textColor: 16750916,
-                                    filters: [new GlowFilter(0x330000, 1, 2, 2, 5, 1, false, false)]
-                                }
-                                : {
-                                    text: -(o.hp),
-                                    textColor: 65450
-                                };
-
+                        displayType = "CRIT";
+                        displayValue = String(o.hp);
                         wound(tMC, "damage");
                         break;
 					case "immune":
-                        displayType = "avoidDisplay";
-                        displayData = { text: "Immune", textColor: 8716287 }
+                        displayType = "IMMUNE";
+                        displayValue = "Immune";
 					    break;
                     case "miss":
-                        displayType = "avoidDisplay";
-                        displayData = { text: "Miss!" }
+                        displayType = "MISS";
+                        displayValue = "Miss";
                         break;
                     case "dodge":
-                        displayType = "avoidDisplay";
-                        displayData = { text: "Dodge!" }
+                        displayType = "DODGE";
+                        displayValue = "Dodge!";
                         if (isMoveOK(tMC.pAV.dataLeaf) && entType != "t") {
                             tMC.queueAnim("Dodge");
                         }
                         break;
                     case "parry":
-                        displayType = "avoidDisplay";
-                        displayData = { text: "Parry!" }
+                        displayType = "PARRY";
+                        displayValue = "Parry!";
                         if (isMoveOK(tMC.pAV.dataLeaf) && entType != "t") {
                             tMC.queueAnim("Dodge");
                         }
                         break;
                     case "block":
-                        displayType = "avoidDisplay";
-                        displayData = { text: "Block!" }
-
+                        displayType = "BLOCK";
+                        displayValue = "Block!";
                         if (isMoveOK(tMC.pAV.dataLeaf) && entType != "t") {
                             tMC.queueAnim("Block");
                         }
@@ -6336,7 +6353,7 @@ public class World extends MovieClip {
                 {
                     var point:Point = tMC.mcChar.localToGlobal(new Point(0, 0));
                     point = CHARS.globalToLocal(point);
-                    game.displayHandler.show(displayType, (point.x - 13) + CHARS.x, (point.y + tMC.pname.y) + CHARS.y, displayData);
+                    game.floatingDisplay.showText(displayValue, displayType, (point.x - 13) + CHARS.x, (point.y + tMC.pname.y) + CHARS.y);
                 }
             }
             i++;
@@ -6370,26 +6387,7 @@ public class World extends MovieClip {
         if (tAvt != null) {
             var point:Point = tAvt.mcChar.localToGlobal(new Point(0, 0));
             point = CHARS.globalToLocal(point);
-
-            if (actionResult.typ == "bleed")
-            {
-                game.displayHandler.show("dotDisplay", (point.x - 13) + CHARS.x, (point.y + tAvt.pname.y) + CHARS.y, {
-                    text: actionResult.hp,
-                    textColor: 0xFF4C4C
-                });
-            }
-            else if (actionResult.typ == "toxic")
-            {
-                game.displayHandler.show("dotDisplay", (point.x - 13) + CHARS.x, (point.y + tAvt.pname.y) + CHARS.y, {
-                    text: actionResult.hp,
-                    textColor: 0x66FF66
-                });
-            }
-            else
-            {
-				trace("dotDisplay > " + actionResult.hp);
-                game.displayHandler.show("dotDisplay", (point.x - 13) + CHARS.x, (point.y + tAvt.pname.y) + CHARS.y, { text: actionResult.hp });
-            }
+            game.floatingDisplay.showText(String(actionResult.hp), actionResult.typ == "bleed" ? "BLEED" : (actionResult.typ == "toxic" ? "TOXIC" : "DOT"), (point.x - 13) + CHARS.x, (point.y + tAvt.pname.y) + CHARS.y);
         }
     }
 
@@ -6950,7 +6948,7 @@ public class World extends MovieClip {
 //    }
 
     public function wound(obj:*, typ:String):* {
-        if (game.preference.data.bDisDmgStrobe || typ != "damage" || obj.getChildByName("flickermc") != null || getTimer() - obj.lastFlickerTime < 1500) return;
+        if (game.preference.data.bDisDmgStrobe || typ != "damage" || obj.getChildByName("flickermc") != null || getTimer() - obj.lastFlickerTime < 2500) return;
 
         var flicker:MovieClip = new MovieClip();
         flicker.name = "flickermc";
@@ -8202,9 +8200,21 @@ public class World extends MovieClip {
             return;
         }
 
+        trace("keepOrRemoveAllDrop: " + JSON.stringify(dropMenu));
+
         var drops:Array = [];
 
-        for each (var drop:Object in dropMenu) drops.push(drop.ItemID);
+        for each (var drop:Object in dropMenu)
+        {
+//            var itemInInventory:Object = myAvatar.getItemByID(drop.ItemID); // (drop.ItemID);
+//
+//            if (itemInInventory != null)
+//            {
+//                if (itemInInventory.iQ)
+//            }
+
+            drops.push(drop.ItemID);
+        }
 
         game.net.send(isKeep ? "getDrop" : "denyDrop", drops);
 
@@ -8216,229 +8226,116 @@ public class World extends MovieClip {
         game.RefreshLootCount();
     }
 
-//    public function mapScrollCheck():void
-//    {
+    public function mapScrollCheck():void {
+        try {
+            if (!SCROLL) return;
+
+            const VIEW_WIDTH:int = 1280;
+            const VIEW_HEIGHT:int = 700;
+            const HALF_WIDTH:int = VIEW_WIDTH / 2;
+            const HALF_HEIGHT:int = VIEW_HEIGHT / 2;
+            const CAMERA_OFFSET_Y:int = HALF_HEIGHT - 50;
+            const SCROLL_SPEED:Number = 0.15;
+            var targetMapX:Number = 0;
+            var targetMapY:Number = 0;
+
+            var p:Point = myAvatar.pMC.location;
+            var bounds:Rectangle = map.walk.getRect(stage);
+            var mapWidth:int = bounds.width;
+            var mapHeight:int = bounds.height;
+
+            targetMapX = HALF_WIDTH - p.x;
+
+            if (mapWidth <= VIEW_WIDTH) {
+                targetMapX = (VIEW_WIDTH - mapWidth) / 2;
+            } else {
+                var maxScrollX:int = 0;
+                var minScrollX:int = VIEW_WIDTH - mapWidth;
+                targetMapX = Math.min(maxScrollX, Math.max(minScrollX, targetMapX));
+            }
+
+            targetMapY = CAMERA_OFFSET_Y - p.y;
+
+            if (mapHeight <= VIEW_HEIGHT) {
+                targetMapY = (VIEW_HEIGHT - mapHeight) / 2;
+            } else {
+                var maxScrollY:int = 0;
+                var minScrollY:int = VIEW_HEIGHT - mapHeight;
+                targetMapY = Math.min(maxScrollY, Math.max(minScrollY, targetMapY));
+            }
+
+            map.x += (targetMapX - map.x) * SCROLL_SPEED;
+            map.y += (targetMapY - map.y) * SCROLL_SPEED;
+            CHARS.x += (targetMapX - CHARS.x) * SCROLL_SPEED;
+            CHARS.y += (targetMapY - CHARS.y) * SCROLL_SPEED;
+
+        } catch(e:Error) {
+
+        }
+    }
+
+
+//    public function mapScrollCheck():void {
 //        if (!SCROLL) return;
 //
-//        // Cache frequently used values
-//        var p:Point = new Point(this.x, this.y);
+//        var p:Point = myAvatar.pMC.location;
 //        var bounds:Rectangle = map.walk.getRect(stage);
 //        var _halfWidth:int = ConfigurationData.CLIENT_WIDTH / 2;
 //        var _halfHeight:int = ConfigurationData.CLIENT_HEIGHT / 2;
 //        var _cdy:int = _halfHeight - 50;
 //
-//        // Horizontal scrolling
-//        var maxRight:int = bounds.width - _halfWidth;
-//        var minLeft:int = _halfWidth;
-//
-//        if (p.x > minLeft && p.x < maxRight)
-//        {
-//            var xd:int = _halfWidth - (bounds.x + p.x);
-//            if (xd != 0)
-//            {
-//                map.x += xd;
-//                CHARS.x += xd;
-//            }
-//        }
-//        else
-//        {
-//            var targetX:int = 0;
-//            if (p.x <= minLeft)
-//            {
-//                targetX = 0;
-//            }
-//            else if (p.x >= maxRight)
-//            {
-//                targetX = ConfigurationData.CLIENT_WIDTH - bounds.width;
-//            }
-//
-//            if (map.x != targetX)
-//            {
-//                map.x = targetX;
-//                CHARS.x = targetX;
-//            }
-//        }
-//
-//        // Vertical scrolling
-//        var maxBottom:int = bounds.height - (ConfigurationData.CLIENT_HEIGHT - _cdy);
-//
-//        if (p.y > _cdy && p.y < maxBottom)
-//        {
-//            var yd:int = _cdy - (bounds.y + p.y);
-//            if (yd != 0)
-//            {
-//                map.y += yd;
-//                CHARS.y += yd;
-//            }
-//        }
-//        else
-//        {
-//            var targetY:int = 0;
-//            if (p.y <= _cdy)
-//            {
-//                targetY = 0;
-//            }
-//            else if (p.y >= maxBottom)
-//            {
-//                targetY = ConfigurationData.CLIENT_HEIGHT - bounds.height;
-//            }
-//
-//            if (map.y != targetY)
-//            {
-//                map.y = targetY;
-//                CHARS.y = targetY;
-//            }
-//        }
-//    }
-
-//    public function mapScrollCheck():void {
-//        if (!SCROLL) return;
-//
-//        var p:Point = myAvatar.pMC.location;
-//        var bounds:Rectangle = map.walk.getRect(stage);
-//        var _halfWidth:int = ConfigurationData.CLIENT_WIDTH * 0.5;
-//        var _halfHeight:int = ConfigurationData.CLIENT_HEIGHT * 0.5;
-//        var _cdy:int = _halfHeight - 50;
-//
 //        var mapChanged:Boolean = false;
-//        var targetX:int = map.x;
-//        var targetY:int = map.y;
-//
-//        // Cache frequently used values
-//        var boundsX:int = bounds.x + p.x;
-//        var boundsY:int = bounds.y + p.y;
 //
 //        // Horizontal Scrolling
 //        var maxRight:int = bounds.width - _halfWidth;
 //        var minLeft:int = _halfWidth;
+//        var boundsX:int = bounds.x + p.x;
 //
 //        if (p.x > minLeft && p.x < maxRight) {
-//            targetX += _halfWidth - boundsX;
+//            var xd:int = _halfWidth - boundsX;
+//            if (xd != 0) {
+//                map.x += xd;
+//                CHARS.x += xd;
+//            }
 //        } else {
-//            if (p.x <= minLeft) {
+//            var targetX:int = 0;
+//            if (p.x < minLeft) {
 //                targetX = 0;
-//            } else if (p.x >= maxRight) {
+//            } else if (p.x > maxRight) {
 //                targetX = ConfigurationData.CLIENT_WIDTH - bounds.width;
+//            }
+//
+//            if (map.x != targetX) {
+//                map.x = targetX;
+//                CHARS.x = targetX;
+//                mapChanged = true;
 //            }
 //        }
 //
 //        // Vertical Scrolling
 //        var maxBottom:int = bounds.height - (ConfigurationData.CLIENT_HEIGHT - _cdy);
-//
 //        if (p.y > _cdy && p.y < maxBottom) {
-//            targetY += _cdy - boundsY;
+//            var xdy:int = _cdy - (bounds.y + p.y);
+//            if (xdy != 0) {
+//                map.y += xdy;
+//                CHARS.y += xdy;
+//                mapChanged = true;
+//            }
 //        } else {
-//            if (p.y <= _cdy) {
+//            var targetY:int = 0;
+//            if (p.y < _cdy) {
 //                targetY = 0;
-//            } else if (p.y >= maxBottom) {
+//            } else if (p.y > maxBottom) {
 //                targetY = ConfigurationData.CLIENT_HEIGHT - bounds.height;
 //            }
-//        }
 //
-//        // Apply changes only if needed
-//        if (map.x != targetX || map.y != targetY) {
-//            map.x = targetX;
-//            map.y = targetY;
-//            CHARS.x = targetX;
-//            CHARS.y = targetY;
-//            mapChanged = true;
+//            if (map.y != targetY) {
+//                map.y = targetY;
+//                CHARS.y = targetY;
+//                mapChanged = true;
+//            }
 //        }
 //    }
-
-//    public function mapScrollCheck():void {
-//        if (!SCROLL) return;
-//
-//        var p:Point = myAvatar.pMC.location;
-//        var bounds:Rectangle = map.walk.getRect(stage);
-//
-//        var halfW:int = ConfigurationData.CLIENT_WIDTH / 2;
-//        var halfH:int = ConfigurationData.CLIENT_HEIGHT / 2;
-//
-//        // Desired camera position centers on player
-//        var targetX:Number = halfW - (bounds.x + p.x);
-//        var targetY:Number = halfH - (bounds.y + p.y);
-//
-//        // Clamp to map edges (so camera never shows outside map)
-//        var minX:Number = ConfigurationData.CLIENT_WIDTH - bounds.width;
-//        var maxX:Number = 0;
-//        var minY:Number = ConfigurationData.CLIENT_HEIGHT - bounds.height;
-//        var maxY:Number = 0;
-//
-//        targetX = Math.max(minX, Math.min(maxX, targetX));
-//        targetY = Math.max(minY, Math.min(maxY, targetY));
-//
-//        // Smooth easing (adjust 0.1 for stronger/weaker follow)
-//        var ease:Number = 0.1;
-//        map.x += (targetX - map.x) * ease;
-//        map.y += (targetY - map.y) * ease;
-//
-//        // Sync CHARS layer
-//        CHARS.x = map.x;
-//        CHARS.y = map.y;
-//    }
-
-
-    public function mapScrollCheck():void {
-        if (!SCROLL) return;
-
-        var p:Point = myAvatar.pMC.location;
-        var bounds:Rectangle = map.walk.getRect(stage);
-        var _halfWidth:int = ConfigurationData.CLIENT_WIDTH / 2;
-        var _halfHeight:int = ConfigurationData.CLIENT_HEIGHT / 2;
-        var _cdy:int = _halfHeight - 50;
-
-        var mapChanged:Boolean = false;
-
-        // Horizontal Scrolling
-        var maxRight:int = bounds.width - _halfWidth;
-        var minLeft:int = _halfWidth;
-        var boundsX:int = bounds.x + p.x;
-
-        if (p.x > minLeft && p.x < maxRight) {
-            var xd:int = _halfWidth - boundsX;
-            if (xd != 0) {
-                map.x += xd;
-                CHARS.x += xd;
-            }
-        } else {
-            var targetX:int = 0;
-            if (p.x < minLeft) {
-                targetX = 0;
-            } else if (p.x > maxRight) {
-                targetX = ConfigurationData.CLIENT_WIDTH - bounds.width;
-            }
-
-            if (map.x != targetX) {
-                map.x = targetX;
-                CHARS.x = targetX;
-                mapChanged = true;
-            }
-        }
-
-        // Vertical Scrolling
-        var maxBottom:int = bounds.height - (ConfigurationData.CLIENT_HEIGHT - _cdy);
-        if (p.y > _cdy && p.y < maxBottom) {
-            var xdy:int = _cdy - (bounds.y + p.y);
-            if (xdy != 0) {
-                map.y += xdy;
-                CHARS.y += xdy;
-                mapChanged = true;
-            }
-        } else {
-            var targetY:int = 0;
-            if (p.y < _cdy) {
-                targetY = 0;
-            } else if (p.y > maxBottom) {
-                targetY = ConfigurationData.CLIENT_HEIGHT - bounds.height;
-            }
-
-            if (map.y != targetY) {
-                map.y = targetY;
-                CHARS.y = targetY;
-                mapChanged = true;
-            }
-        }
-    }
 
     public function tryRandomAction() : void
     {
@@ -8460,6 +8357,22 @@ public class World extends MovieClip {
                 testAction(actionRef);
             }
 
+        }
+    }
+
+    public function getElement(element:String) : MovieClip
+    {
+        switch (element)
+        {
+            case "Fire": return new Fire();
+            case "Water": return new Water();
+            case "Wind": return new Wind();
+            case "Earth": return new Earth();
+            case "Lightning": return new Lightning();
+            case "Ice": return new Ice();
+            case "Nature":return new Nature();
+            case "Light":return new Light();
+            case "Dark": return new Dark();
         }
     }
 

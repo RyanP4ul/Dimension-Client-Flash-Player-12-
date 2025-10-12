@@ -2,6 +2,8 @@
 
 import UI.Chat;
 
+import test_characters.Carousel;
+
 import flash.display.DisplayObject;
 import flash.display.MovieClip;
 import flash.display.SimpleButton;
@@ -31,6 +33,7 @@ public class Characters extends MovieClip {
     public var settings:CharacterSettings;
     public var askPassword:CharacterAskPassword;
 
+    public var carousel:Carousel;
     public var lists:MovieClip = new MovieClip();
     public var outfitLists:MovieClip = new MovieClip();
     public var btnSettings:MovieClip;
@@ -47,20 +50,31 @@ public class Characters extends MovieClip {
     public var characters:Array;
     public var avatars:Array;
 
+    public var jokeDelay:Number = 1000 * 20;
+    public var timer:Timer = new Timer(jokeDelay);
+    public var jokes:Array = ["Choosing your hero… or your next respawn victim?", "Remember: fashion > stats. Always.", "Your character misses you. No pressure.", "Did you really grind 6 hours for that hat?", "Ah yes, the hero who saved the world… and still can’t find pants that match.", "You look stronger than yesterday. Must be the lag.", "Warning: this character still owes Gold to the innkeeper."]
+
     public var world:World;
 
     private var _currentSelected:CharSelectListItem;
     private var _previousSelected:CharSelectListItem;
 
     public function Characters() {
+        chat = new Chat(game);
         settings.visible = false;
         askPassword.visible = false;
+
+        if (game.mcLogin.mcTitle)
+        {
+            var title:MovieClip = game.mcLogin.mcTitle.getChildAt(0) as MovieClip;
+            title.Screen.Background.Spawn.alpha = 1;
+        }
 
         tBtn.text = "Play";
         tBtn.mouseEnabled = false;
 
         lists.x = 945;
-        lists.y = 150;
+        lists.y = 100;
         addChildAt(lists, 1);
 
         outfitLists.x = 50;
@@ -69,6 +83,7 @@ public class Characters extends MovieClip {
 
         initInterface();
         initLists();
+        initAnnouncements();
     }
 
     public function initInterface(): void {
@@ -84,10 +99,11 @@ public class Characters extends MovieClip {
         btnLeftCharacter.addEventListener(MouseEvent.CLICK, onClick);
         btnRightCharacter.addEventListener(MouseEvent.CLICK, onClick);
         btnSettings.buttonMode = true;
+        timer.addEventListener(TimerEvent.TIMER, onTimer);
     }
 
     public function initCharacters():void {
-//		try {
+		try {
 		
 		removeAllCharacters();
 
@@ -116,10 +132,11 @@ public class Characters extends MovieClip {
             }
         }
 
+            timer.start();
         positionHighlighter();
 		
-//		} catch(e:Error) {
-//		}
+		} catch(e:Error) {
+		}
     }
 
     private function setAvatar(obj:Object):void {
@@ -133,14 +150,27 @@ public class Characters extends MovieClip {
         var avatar:AvatarMC = obj.strUsername in game.cache.characters ? game.cache.characters[obj.strUsername] as AvatarMC : world.loadAvatar(world, pAV, true);
 
         avatar.name = "avt-" + avatars.indexOf(obj);
-        avatar.scale(avatars.indexOf(obj) == 0 ? 2.3 : 1.5);
-        avatar.x = avatars.indexOf(obj) == 0 ? 350 : (avatars.indexOf(obj) == 1) ? 500 : 200;
-        avatar.y = avatars.indexOf(obj) == 0 ? 450 : 400;
-        avatar.transform.colorTransform = avatars.indexOf(obj) != 0 ? characterCT : defaultCT;
+        avatar.scale(avatars.indexOf(obj) == 0 ? 2.6 : 1.8);
+        avatar.x = avatars.indexOf(obj) == 0 ? 450 : (avatars.indexOf(obj) == 1) ? 650 : 250;
+        avatar.y = avatars.indexOf(obj) == 0 ? 520 : 470;
+        avatar.mcChar.transform.colorTransform = avatars.indexOf(obj) != 0 ? characterCT : defaultCT;
 
         if (!(obj.strUsername in game.cache.characters)) game.cache.characters[obj.strUsername] = avatar;
 
+        if (avatars.indexOf(obj) == 0) {
+            var randomAnimation:Array = ['Cheer', 'Backflip', 'Wave', 'Unsheath'];
+            avatar.mcChar.gotoAndPlay(randomAnimation[Math.floor(Math.random() * randomAnimation.length)]);
+        }
+
         addChildAt(avatar, 0);
+
+//        var box:MovieClip = new MovieClip();
+//        box.graphics.beginFill(52479);
+//        box.graphics.drawRect(0, 0, 50, 20);
+//        box.graphics.endFill();
+//        box.x = avatars.indexOf(obj) == 0 ? 450 : (avatars.indexOf(obj) == 1) ? 650 : 250;
+//        box.y = avatars.indexOf(obj) == 0 ? 400 : 350;
+//        addChildAt(box, 0);
     }
 
     private function initLists():void {
@@ -154,9 +184,11 @@ public class Characters extends MovieClip {
             var item:CharSelectListItem = new CharSelectListItem();
 
             if (i < game.getLogin().intCharSlot) {
-                if (characters[i] != null) {
-                    item.tName.text = characters[i].strUsername;
-                    item.tInfo.text = "Level " + characters[i].intLevel + ", " + characters[i].strClassName + " Rank " + game.getRankFromPoints(characters[i].intClassRank);
+                var character:Object = characters[i];
+
+                if (character) {
+                    item.tName.text = character.strUsername;
+                    item.tInfo.text = "Level " + character.intLevel + ", " + character.strClassName + " Rank " + game.getRankFromPoints(character.intClassRank);
                     item.btnDelete.addEventListener(MouseEvent.CLICK, onClick);
                     item.name = "item-" + i;
                     item.addEventListener(MouseEvent.CLICK, function (event:MouseEvent): void {
@@ -202,6 +234,14 @@ public class Characters extends MovieClip {
         positionHighlighter();
     }
 
+    private function initAnnouncements() : void
+    {
+        carousel = new Carousel();
+        carousel.x = 945;
+        carousel.y = 514;
+        addChild(carousel);
+    }
+
     public function initSettings() : void {
         settings.btnCloseSettings.addEventListener(MouseEvent.CLICK, onClick);
 
@@ -229,14 +269,23 @@ public class Characters extends MovieClip {
     }
 
     public function initGame():void {
-		try {
-			game.musicChannel.stop();
-		} catch(e:Error) {
-		}
-
         Game.loginInfo.strCharName = characters[selected].strUsername;
         game.connectTo(ConfigurationData.SERVER_IP_ADDRESS, ConfigurationData.SERVER_PORT);
         game.chatF.iChat = 2;
+    }
+
+    private function onTimer(event:TimerEvent):void {
+        try {
+            if (currentFrameLabel != "Login") timer.stop();
+
+            var targetChild:DisplayObject = getChildByName("avt-" + (game.preference.data.bHideOtherCharacter || avatars.length <= 1 ? selected : Math.floor(Math.random() * avatars.length)));
+            var luckyGuy:AvatarMC = targetChild as AvatarMC;
+            var randomJokes:String = jokes[Math.floor(Math.random() * jokes.length)];
+
+            chat.popBubble("", randomJokes, luckyGuy, 7000);
+        } catch (e:Error) {
+            timer.stop();
+        }
     }
 
     public function updateCharacters():void {

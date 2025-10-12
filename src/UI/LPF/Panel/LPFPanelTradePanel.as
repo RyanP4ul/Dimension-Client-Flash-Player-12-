@@ -100,7 +100,7 @@ public class LPFPanelTradePanel extends LPFPanel  {
             "h":370
         };
         frame.tabStates = MovieClip(fParent).getTabStates();
-        frame.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item", "BattlePet"];
+        frame.sortOrder = ["Note", "Resource", "Item", "Potion", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item", "BattlePet"];
         frame.filterMap = {
             "Weapon":["Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand"],
             "ar":["Class", "Armor"],
@@ -108,7 +108,7 @@ public class LPFPanelTradePanel extends LPFPanel  {
             "ba":["Cape"],
             "pe":["Pet", "BattlePet"],
             "am":["Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring"],
-            "it":["Note", "Resource", "Item", "Quest Item", "ServerUse"],
+            "it":["Note", "Resource", "Item", "Potion", "Quest Item", "ServerUse"],
             "enh":["Enhancement"],
             "House":["House"],
             "Wall Item":["Wall Item"],

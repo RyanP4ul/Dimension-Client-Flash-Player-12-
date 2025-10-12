@@ -3,21 +3,16 @@
 import Game_fla.game_1_cnt_6;
 
 import UI.Chat;
-import UI.Display.avoidDisplay;
-import UI.Display.critDisplay;
-import UI.Display.dotDisplay;
-import UI.Display.hitDisplay;
 import UI.ModalMC;
 import UI.uProto;
 
 import com.adobe.images.PNGEncoder;
-import com.jpauclair.Base64;
+
+import features.FloatingDisplayHandler;
 
 import fl.motion.Color;
 
 import flash.display.*;
-import flash.display.MovieClip;
-import flash.display.MovieClip;
 import flash.events.Event;
 import flash.events.FocusEvent;
 import flash.events.IOErrorEvent;
@@ -33,24 +28,21 @@ import flash.geom.Rectangle;
 import flash.media.*;
 import flash.net.*;
 import flash.system.*;
-
+import flash.text.TextField;
+import flash.text.TextFieldAutoSize;
+import flash.text.TextFormat;
 import flash.ui.*;
 import flash.utils.*;
 
 import game.Examine;
-
 import game.aura.PlayerAura;
-
 import game.aura.TargetAura;
 import game.builder.MapBuilder;
-
 import game.character.BattleAnalyzer;
 import game.character.Boosts;
 import game.character.Stats;
 import game.config.ConfigurationData;
-
 import game.controller.StatController;
-import game.handler.DisplayHandler;
 import game.pve.FloorReward;
 
 import network.Cache;
@@ -149,9 +141,7 @@ public class Game extends MovieClip {
     public var mapBuilder:MapBuilder;
     public var floorReward:FloorReward;
 
-    public var equipPotion1:Boolean = false;
-    public var equipPotion2:Boolean = false;
-    public var displayHandler:DisplayHandler;
+    public var floatingDisplay:FloatingDisplayHandler;
 
     {
         MovieClip.prototype.removeAllChildren = function ():void
@@ -170,7 +160,7 @@ public class Game extends MovieClip {
         ldrMC = new LoaderMC(MovieClip(this));
         cache = new Cache();
         statsController = new StatController(this);
-        displayHandler = new DisplayHandler();
+        floatingDisplay = new FloatingDisplayHandler();
 
         _characters = [];
 
@@ -200,16 +190,19 @@ public class Game extends MovieClip {
         addChildAt(new Sprite(), 0);
     }
 
-    public function setBackgroundMusic(music:Sound) : void {
+    public function setBackgroundMusic(music:Sound, sc:SoundChannel) : void {
         backgroundMusic = music;
-        musicTransform = new SoundTransform();
+        musicChannel = sc;
         playBackgroundMusic();
     }
 
     private function playBackgroundMusic():void {
-        musicChannel = backgroundMusic.play();
-        musicTransform.volume = 30 / 100;
-        musicChannel.soundTransform = musicTransform;
+        if (musicChannel)
+        {
+            var transform:SoundTransform = musicChannel.soundTransform;
+            transform.volume = 30 /100;
+            musicChannel.soundTransform = transform;
+        }
     }
 
     public static function trim(p_string:String):String {
@@ -2290,49 +2283,60 @@ public class Game extends MovieClip {
 
     public function toggleItemEquip(o:Object):Boolean {
         var isValid:Boolean = false;
+        var sType:String = o.sType.toLowerCase();
+        var sES:String = o.sES;
 
         if (world.getUoLeafById(world.myAvatar.uid).intState != 1) {
             MsgBox.notify("Action cannot be performed during combat!");
-        } else {
-            if (world.bPvP) {
-                MsgBox.notify("Items may not be equipped or unequipped during a PvP match!");
-            } else {
-                if (o.bEquip == 1) {
-                    if (o.sES == "Weapon" || o.sES == "ar") {
-                        MsgBox.notify("Selected Item cannot be unequipped!");
-                    } else {
-                        isValid = true;
-                        if (o.sType.toLowerCase() != "item") {
-                            world.sendUnequipItemRequest(o);
-                        } else {
-                            world.unequipUseableItem(o);
-                        }
-                    }
-                } else {
-                    if (o.bUpg == 1 && !world.myAvatar.isUpgraded()) {
-                        showUpgradeWindow();
-                    } else {
-                        if (int(o.EnhLvl) > int(world.myAvatar.objData.intLevel)) {
-                            MsgBox.notify("Level requirement not met!");
-                        } else {
-                            if (!(o.sType.toLowerCase() == "item") && ((!(o.sES == "co")) && (!(o.sES == "pe")) && !(o.sES == "am") && !(o.EnhID > 0))) {
-                                MsgBox.notify("Selected item requires enhancement!");
-                            } else {
-                                if (o.sType.toLowerCase() != "item") {
-                                    isValid = world.sendEquipItemRequest(o);
-                                } else {
-                                    isValid = true;
-                                    world.equipUseableItem(o);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            return false;
         }
+
+        if (world.bPvP) {
+            MsgBox.notify("Items may not be equipped or unequipped during a PvP match!");
+            return false;
+        }
+
+        if (o.bEquip == 1) {
+            if (sES == "Weapon" || sES == "ar") {
+                MsgBox.notify("Selected Item cannot be unequipped!");
+                return false;
+            }
+
+            isValid = true;
+
+            if (sType == "item" || sType == "potion") world.unequipUseableItem(o);
+            else world.sendUnequipItemRequest(o);
+
+            return isValid;
+        }
+
+        if (o.bUpg == 1 && !world.myAvatar.isUpgraded()) {
+            showUpgradeWindow();
+            return false;
+        }
+
+        if (int(o.EnhLvl) > int(world.myAvatar.objData.intLevel)) {
+            MsgBox.notify("Level requirement not met!");
+            return false;
+        }
+
+        var needsEnh:Boolean = (sType != "item" && sES != "co" && sES != "pe" && sES != "am" && !(o.EnhID > 0));
+        if (needsEnh) {
+            MsgBox.notify("Selected item requires enhancement!");
+            return false;
+        }
+
+        if (sType == "item" || sType == "potion")
+        {
+            isValid = true;
+            world.equipUseableItem(o);
+        }
+        else
+            isValid = world.sendEquipItemRequest(o);
 
         return isValid;
     }
+
 
     public function tryEnhance(_arg_1:Object, _arg_2:Object, _arg_3:Boolean = false):void {
         if (!(_arg_1 == null) && !(_arg_2 == null)) {
@@ -2461,7 +2465,8 @@ public class Game extends MovieClip {
         mcGameMenu = MovieClip(new menuClass());
         mcGameMenu.name = "gameMenu";
         mcGameMenu.visible = true;
-        mcGameMenu.x = 750;
+        mcGameMenu.x = 1050;
+		mcGameMenu.y = 20;
 
         ui.addChild(mcGameMenu);
     }
@@ -2519,28 +2524,7 @@ public class Game extends MovieClip {
 
         this.addChildAt(world, getChildIndex(ui));
 
-        initDisplayHandler();
-    }
-
-    private function initDisplayHandler() : void
-    {
-        displayHandler.registerDisplayType("dotDisplay", function():* {
-            return new dotDisplay();
-        }, 10, 20);
-
-        displayHandler.registerDisplayType("hitDisplay", function():* {
-            return new hitDisplay();
-        }, 10, 30);
-
-        displayHandler.registerDisplayType("critDisplay", function():* {
-            return new critDisplay();
-        }, 5, 10);
-
-        displayHandler.registerDisplayType("avoidDisplay", function():* {
-            return new avoidDisplay();
-        }, 5, 10);
-
-        addChild(displayHandler);
+        addChild(floatingDisplay);
     }
 
     public function grayAll(_arg_1:DisplayObjectContainer):void {
@@ -2792,9 +2776,6 @@ public class Game extends MovieClip {
             ui.addChild(targetAura);
         }
 
-        equipPotion1 = false;
-        equipPotion2 = false;
-
         mapBuilder.visible = false;
 
 //        if (preference.data.bAuras)
@@ -2920,7 +2901,7 @@ public class Game extends MovieClip {
 
     public function loadChatChannels() : void {
         mcConnDetail.showConn("Loading chat channels...");
-        requestAPI(URLRequestMethod.GET,"data/chat/channels", {}, onChatChannelsComplete, onChatChannelsError, false);
+        requestAPI(URLRequestMethod.GET,"game/chat/channels", {}, onChatChannelsComplete, onChatChannelsError, false);
     }
 
     public function onChatChannelsComplete(event:Event):void {
@@ -3424,8 +3405,6 @@ public class Game extends MovieClip {
     }
 
     public function logout():void {
-        trace("logout called");
-
         if (world != null) {
             world.exitCombat();
             world.setTarget(null);
@@ -3451,7 +3430,8 @@ public class Game extends MovieClip {
         }
 
         if (currentLabel != "Login") {
-            backgroundMusic.play();
+            musicChannel = backgroundMusic.play(0, int.MAX_VALUE);
+//            mcLogin.gotoAndStop("Characters");
             gotoAndPlay("Login");
         }
     }
@@ -3866,6 +3846,26 @@ public class Game extends MovieClip {
 
         mixer.playSound("Good");
         cleanDropStack();
+    }
+
+    public function togglePopup(label:String = "") : void {
+        var popup:MovieClip = ui.mcPopup;
+
+        if (!isGreedyModalInStack())
+        {
+            if (popup.currentLabel != label)
+            {
+                clearPopups();
+                clearPopupsQ();
+                popup.fData = {"typ": label};
+                popup.visible = true;
+                popup.gotoAndPlay(label);
+            }
+            else
+            {
+                popup.onClose();
+            }
+        }
     }
 
     public function toggleOutfit(_arg_1:String = ""):void {
@@ -4576,40 +4576,78 @@ public class Game extends MovieClip {
         return timestamp + "%" + randomPart;
     }
 
-public function updateCharacterImage():void {
-    var mc:MovieClip = world.myAvatar.pMC.mcChar;
-    if (!mc) return;
+    public function updateCharacterImage():void {
+        var mc:MovieClip = world.myAvatar.pMC.mcChar;
+        if (!mc) return;
 
-    var bounds:Rectangle = mc.getBounds(mc);
+        var bounds:Rectangle = mc.getBounds(mc);
 
-    var scale:Number = 2; // <- make it bigger (2x, 3x, etc.)
+        var scale:Number = 2; // <- make it bigger (2x, 3x, etc.)
 
-    var w:int = Math.max(1, Math.ceil(bounds.width  * scale));
-    var h:int = Math.max(1, Math.ceil(bounds.height * scale));
+        var w:int = Math.max(1, Math.ceil(bounds.width  * scale));
+        var h:int = Math.max(1, Math.ceil(bounds.height * scale));
 
-    var mtx:Matrix = new Matrix();
-    mtx.scale(scale, scale);
-    mtx.translate(-bounds.x * scale, -bounds.y * scale);
+        var mtx:Matrix = new Matrix();
+        mtx.scale(scale, scale);
+        mtx.translate(-bounds.x * scale, -bounds.y * scale);
 
-    var bmd:BitmapData = new BitmapData(w, h, true, 0x00000000);
-    bmd.draw(mc, mtx, null, null, null, true); // smoothing = true
+        var bmd:BitmapData = new BitmapData(w, h, true, 0x00000000);
+        bmd.draw(mc, mtx, null, null, null, true); // smoothing = true
 
-    var png:ByteArray = PNGEncoder.encode(bmd);
+        var png:ByteArray = PNGEncoder.encode(bmd);
 
-    var req:URLRequest = new URLRequest(serverBaseURL + "api/game/character/" +
-        world.myAvatar.objData.CharID + "/image/");
-    req.method = URLRequestMethod.POST;
-    req.contentType = "image/png";
-    req.data = png;
+        var req:URLRequest = new URLRequest(serverBaseURL + "api/game/character/" +
+            world.myAvatar.objData.CharID + "/image/");
+        req.method = URLRequestMethod.POST;
+        req.contentType = "image/png";
+        req.data = png;
 
-    var loader:URLLoader = new URLLoader();
-    loader.addEventListener(Event.COMPLETE, function(e:Event):void {
-        trace("Character Image Updated!");
-    });
-    loader.load(req);
+        var loader:URLLoader = new URLLoader();
+        loader.addEventListener(Event.COMPLETE, function(e:Event):void {
+            trace("Character Image Updated!");
+        });
+        loader.load(req);
 
-    bmd.dispose();
-}
+        bmd.dispose();
+    }
+
+    public function cloneAsBitmap(target:DisplayObject):Bitmap {
+        var bounds:Rectangle = target.getBounds(target);
+        if (bounds.width <= 0 || bounds.height <= 0) {
+            trace("[cloneAsBitmap] Target has no visible size:", target);
+            return null;
+        }
+
+        var bmd:BitmapData = new BitmapData(bounds.width, bounds.height, true, 0x00000000);
+
+        var m:Matrix = new Matrix();
+        m.translate(-bounds.x, -bounds.y);
+        bmd.draw(target, m, target.transform.colorTransform, null, null, true);
+
+        var clone:Bitmap = new Bitmap(bmd);
+        clone.smoothing = true;
+        return clone;
+    }
+
+    public function createTextField(
+            text:String,
+            size:int = 14,
+            color:uint = 0xFFFFFF,
+            bold:Boolean = false,
+            autoSize:String = TextFieldAutoSize.LEFT
+    ):TextField {
+        var tf:TextField = new TextField();
+        var format:TextFormat = new TextFormat("Space Mono", size, color, bold);
+
+        tf.defaultTextFormat = format;
+        tf.autoSize = autoSize;
+        tf.text = text;
+        tf.selectable = false;
+        tf.mouseEnabled = false;
+
+        return tf;
+    }
+
 
     private function frame1():void {
         stop();

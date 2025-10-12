@@ -5,9 +5,21 @@
 
 package UI.LPF.Frame
 {
-import UI.ModalMC;
 
-import assets.ib2;
+    import UI.ModalMC;
+
+    import assets.ib2;
+
+    import element.Dark;
+
+    import element.Earth;
+
+    import element.Fire;
+    import element.Ice;
+    import element.Light;
+    import element.Lightning;
+    import element.Nature;
+    import element.Wind;
 
 import flash.text.TextField;
     import flash.display.MovieClip;
@@ -21,8 +33,9 @@ import flash.text.TextField;
     import flash.filters.GlowFilter;
     import flash.geom.Rectangle;
     import flash.text.*;
+import flash.utils.getDefinitionByName;
 
-    public class LPFFrameItemPreview extends LPFFrame
+public class LPFFrameItemPreview extends LPFFrame
     {
 
         public var tInfo:TextField;
@@ -31,6 +44,8 @@ import flash.text.TextField;
         public var btnDelete:SimpleButton;
         public var btnChatShow:SimpleButton;
         public var btnFav:SimpleButton;
+        public var btnMGender:SimpleButton;
+        public var btnFGender:SimpleButton;
         public var iSel:Object;
         private var previewArgs:Object = {};
         public var game:Game;
@@ -40,6 +55,7 @@ import flash.text.TextField;
         private var sLinkHelm:String = "";
         private var sLinkPet:String = "";
         private var sLinkWeapon:String = "";
+        private var sLinkHouse:String = "";
         private var pLoaderD:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
         private var pLoaderC:LoaderContext = new LoaderContext(false, pLoaderD);
         private var loaderStack:Array = [];
@@ -49,12 +65,21 @@ import flash.text.TextField;
         private var isPet:Boolean = false;
 		private var isEquip:Boolean = false;
         private var equipments:Array = ["Weapon", "co", "ar", "he", "ba", "pe"];
+        private var mcElement:MovieClip;
+        internal var preventSpam:Boolean;
 
         public function LPFFrameItemPreview():void
         {
             pLoaderC.checkPolicyFile = false;
             pLoaderC.allowCodeImport = true;
+
+            btnFGender.visible = false;
+            btnMGender.visible = false;
             mcUpgrade.visible = false;
+
+            btnDelete.addEventListener(MouseEvent.CLICK, onBtnDeleteClick, false, 0, true);
+            btnDelete.addEventListener(MouseEvent.CLICK, onBtnDeleteClick, false, 0, true);
+
             btnDelete.addEventListener(MouseEvent.CLICK, onBtnDeleteClick, false, 0, true);
             btnDelete.addEventListener(MouseEvent.MOUSE_OVER, onDeleteTTOver, false, 0, true);
             btnDelete.addEventListener(MouseEvent.MOUSE_OUT, onDeleteTTOut, false, 0, true);
@@ -66,6 +91,14 @@ import flash.text.TextField;
             btnFav.addEventListener(MouseEvent.MOUSE_OUT, onFavoriteTTOut, false, 0, true);
             mcUpgrade.addEventListener(MouseEvent.MOUSE_OVER, onUpgradeTTOver, false, 0, true);
             mcUpgrade.addEventListener(MouseEvent.MOUSE_OUT, onUpgradeTTOut, false, 0, true);
+
+            btnMGender.addEventListener(MouseEvent.CLICK, onBtnGender, false, 0, true);
+            btnMGender.addEventListener(MouseEvent.MOUSE_OVER, onGenderTTOver, false, 0, true);
+            btnMGender.addEventListener(MouseEvent.MOUSE_OUT, onGenderTTOut, false, 0, true);
+            btnFGender.addEventListener(MouseEvent.CLICK, onBtnGender, false, 0, true);
+            btnFGender.addEventListener(MouseEvent.MOUSE_OVER, onGenderTTOver, false, 0, true);
+            btnFGender.addEventListener(MouseEvent.MOUSE_OUT, onGenderTTOut, false, 0, true);
+
             addEventListener(Event.ENTER_FRAME, onEF, false, 0, true);
         }
 
@@ -106,7 +139,16 @@ import flash.text.TextField;
 
             mcUpgrade.removeEventListener(MouseEvent.MOUSE_OVER, onUpgradeTTOver);
             mcUpgrade.removeEventListener(MouseEvent.MOUSE_OUT, onUpgradeTTOut);
+
+            btnMGender.removeEventListener(MouseEvent.CLICK, onBtnGender);
+            btnMGender.removeEventListener(MouseEvent.MOUSE_OVER, onGenderTTOver);
+            btnMGender.removeEventListener(MouseEvent.MOUSE_OUT, onGenderTTOut);
+            btnFGender.removeEventListener(MouseEvent.CLICK, onBtnGender);
+            btnFGender.removeEventListener(MouseEvent.MOUSE_OVER, onGenderTTOver);
+            btnFGender.removeEventListener(MouseEvent.MOUSE_OUT, onGenderTTOut);
+
             getLayout().unregisterFrame(this);
+
             if (parent != null)
             {
                 parent.removeChild(this);
@@ -117,7 +159,6 @@ import flash.text.TextField;
         {
             btnFav.visible = false;
             btnDelete.visible = false;
-            btnChatShow.visible = false;
 
             var _local_4:Object = iSel;
 
@@ -133,6 +174,26 @@ import flash.text.TextField;
 
             if (_local_4 != null)
             {
+                if (mcElement)
+                {
+                    removeChild(mcElement);
+                    mcElement = null;
+                }
+
+                if (_local_4.hasOwnProperty("sElmt"))
+                {
+                    mcElement = game.world.getElement(_local_4.sElmt);
+
+                    if (mcElement != null)
+                    {
+                        mcElement.width = 30;
+                        mcElement.height = 30;
+                        mcElement.name = "Element";
+                        addChild(mcElement);
+                    }
+
+                }
+
                 if (_local_4.hasOwnProperty("skills"))
                 {
                     if (_skills == null)
@@ -193,6 +254,30 @@ import flash.text.TextField;
                         mcUpgrade.visible = false;
                     }
                 }
+
+                if (_local_4.sType != "Enhancement")
+                {
+                    switch (_local_4.sES)
+                    {
+                        case "ar":
+                        case "co":
+                            if (game.world.myAvatar.objData.strGender == "M")
+                            {
+                                btnFGender.visible = false;
+                                btnMGender.visible = true;
+                            }
+                            else
+                            {
+                                btnFGender.visible = true;
+                                btnMGender.visible = false;
+                            }
+                            break;
+                        default:
+                            btnFGender.visible = false;
+                            btnMGender.visible = false;
+                    }
+                }
+
                 loadPreview(_local_4);
             }
             else
@@ -202,25 +287,8 @@ import flash.text.TextField;
                 clearPreview();
             }
 
-            var isLootAndTemp:Boolean = ["temporary", "loot", "pet"].indexOf(getLayout().sMode.toLowerCase()) != -1;
-
             btnFav.visible = game.ui.mcPopup.currentLabel == "Inventory";
-            btnDelete.visible = getLayout().sMode.toLowerCase().indexOf("shop") <= -1 && !isLootAndTemp;
-            btnChatShow.visible = getLayout().sMode.toLowerCase().indexOf("shop") <= -1 && !isLootAndTemp;
-
-//            if (game.ui.mcPopup.currentLabel == "ItemPreview")
-//            {
-//                btnDelete.visible = false;
-//                btnChatShow.visible = true;
-//                btnFav.visible = false;
-//            }
-//
-//            if (game.ui.mcPopup.currentLabel == "OutfitInventory")
-//            {
-//                btnDelete.visible = false;
-//                btnChatShow.visible = false;
-//                btnFav.visible = false;
-//            }
+            btnDelete.visible = game.ui.mcPopup.currentLabel == "Inventory";
 
             Gender = game.world.myAvatar.objData.strGender;
         }
@@ -534,11 +602,13 @@ import flash.text.TextField;
             game.onLoadMaster(this.onLoadPetComplete, this.pLoaderC, fileName);
         }
 
-        public function loadHouse(fileName:*):void
+        public function loadHouse(fileName:String):void
         {
+            trace("LOAD HOUSE!");
             try
             {
-                game.onLoadMaster(this.onLoadHouseComplete, this.pLoaderC, this.curItem.sFile.substr(0, -4) + "_preview.swf");
+//                game.onLoadMaster(this.onLoadHouseComplete, this.pLoaderC, this.curItem.sFile.substr(0, -4) + "_preview.swf");
+                game.onLoadMaster(this.onLoadHouseComplete, this.pLoaderC, fileName.substr(0, -4) + "_preview.swf");
             }
             catch (e:Error)
             {
@@ -551,6 +621,7 @@ import flash.text.TextField;
             var AssetClass:Class;
             var mc:MovieClip;
             this.clearPreview();
+            trace("onLoadHouseComplete > " + JSON.stringify(curItem));
             try
             {
                 AssetClass = this.pLoaderD.getDefinition(this.curItem.sFile.substr(0, -4).substr((this.curItem.sFile.lastIndexOf("/") + 1)).split("-").join("_") + "_preview") as Class;
@@ -640,6 +711,10 @@ import flash.text.TextField;
             var _loc_2:* = AvatarMC(this.mcPreview.addChild(new AvatarMC()));
             _loc_2.visible = false;
             _loc_2.strGender = this.Gender;
+            if (((btnMGender.visible) || (btnFGender.visible)))
+            {
+                _loc_2.strGender = ((btnMGender.visible) ? "M" : "F");
+            }
             _loc_2.pAV = game.world.myAvatar;
             _loc_2.world = MovieClip(Game.root).world;
             _loc_2.hideHPBar();
@@ -647,6 +722,7 @@ import flash.text.TextField;
             this.addGlow(_loc_2.mcChar, false);
             _loc_2.loadArmorPiecesFromDomain(this.sLinkArmor, this.pLoaderD);
             _loc_2.visible = true;
+            preventSpam = false;
         }
 
         private function onLoadPetComplete(_arg_1:Event):void
@@ -667,6 +743,27 @@ import flash.text.TextField;
             {
                 trace("onLoadHelmComplete " + e);
             }
+        }
+
+        protected function onBtnGender(_arg_1:MouseEvent):void
+        {
+            trace("onBtnGender");
+            if (preventSpam || !iSel)
+            {
+                trace("preventSpam");
+                return;
+            }
+
+            clearPreview();
+
+            var _local_2:String = ((_arg_1.currentTarget.name == "btnMGender") ? "F" : "M");
+            btnMGender.visible = (_local_2 == "M");
+            btnFGender.visible = (_local_2 == "F");
+            sLinkArmor = iSel.sLink;
+
+            game.onLoadMaster(this.onLoadArmorComplete, this.pLoaderC, "classes/" + _local_2 + "/" + iSel.sFile);
+
+            preventSpam = true;
         }
 
         private function addGlow(_arg_1:MovieClip, _arg_2:Boolean=true):void
@@ -746,6 +843,16 @@ import flash.text.TextField;
         }
 
         public function onUpgradeTTOut(_arg_1:MouseEvent):void
+        {
+            game.ui.ToolTip.close();
+        }
+
+        protected function onGenderTTOver(_arg_1:MouseEvent):void
+        {
+            game.ui.ToolTip.openWith({"str":"Switch Gender"});
+        }
+
+        protected function onGenderTTOut(_arg_1:MouseEvent):void
         {
             game.ui.ToolTip.close();
         }

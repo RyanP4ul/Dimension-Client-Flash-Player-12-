@@ -154,6 +154,12 @@ public class RequestHandler extends Object {
             case "unequipItem":
                 UnEquipItem(o);
                 break;
+            case "equipPotion":
+                EquipPotion(o);
+                break;
+            case "unequipPotion":
+                UnequipPotion(o);
+                break;
             case "dropItem":
                 DropItem(o);
                 break;
@@ -1068,8 +1074,6 @@ public class RequestHandler extends Object {
             npcLeaf.strBehave = "walk";
             game.world.npcTree[mID] = npcLeaf;
         }
-
-//        trace("MoveToArea > " + JSON.stringify(game.world.npcTree));
 
         game.world.setMapEvents("event" in o ? o.event : null);
         game.world.setCellMap("cellMap" in o ? o.cellMap : null);
@@ -2008,9 +2012,116 @@ public class RequestHandler extends Object {
         }
     }
 
-    private function DropItem(o:Object):void {
-		trace("dropItem");
+    private function EquipPotion(o:Object) : void {
 	
+		var itemObj:Object = game.world.myAvatar.getItemByID(int(o.ItemID));
+		
+		itemObj.bEquip = 1;
+	
+		if (game.world.myAvatar.isMyAvatar) {
+            var inv:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcInventory"));
+            if (inv) inv.update({ eventType: "refreshItems" });
+        }
+	
+	/*
+		trace(">>>> EquipPotion");
+		trace("Data: " + JSON.stringify(o));
+        var itemObj:Object = game.world.myAvatar.getItemByID(int(o.ItemID));
+
+		trace(">>>> EquipPotion > 1");
+
+        if (itemObj == null) return;
+		
+		trace(">>>> EquipPotion > 2");
+
+        var actObj:Object = null;
+
+        for each (var action:Object in game.world.actions.active) {
+            if (!action) continue;
+			
+			trace("action: " + action.ref  + "" + JSON.stringify(action));
+			
+			if (action.ref != o.ref) continue;
+			
+            actObj = action;
+			break;
+        }
+		
+		trace(">>>> EquipPotion > 3");
+
+        if (!actObj)
+		{
+			trace("actObj is null");
+			return;
+		}
+		
+		trace(">>>> EquipPotion > 4");
+
+        actObj.sArg1 = String(itemObj.ItemID);
+        actObj.sArg2 = String(itemObj.sDesc);
+
+		trace(">>>> EquipPotion > 5");
+
+        game.updateIcons(game.world.getActIcons(actObj), [itemObj.sFile], itemObj);
+        game.updateActionObjIcon(actObj);
+		
+		trace(">>>> EquipPotion > 6");
+
+        itemObj.bEquip = 1;
+        itemObj.bRef = o.ref;
+
+        if (game.world.myAvatar.isMyAvatar) {
+            var inv:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcInventory"));
+            if (inv) inv.update({ eventType: "refreshItems" });
+        }
+		
+		trace(">>>> End EquipPotion");
+		*/
+    }
+
+    private function UnequipPotion(o:Object) : void {
+	
+		var itemObj:Object = game.world.myAvatar.getItemByID(int(o.ItemID));
+		
+		itemObj.bEquip = 0;
+	
+		if (game.world.myAvatar.isMyAvatar) {
+            var inv:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcInventory"));
+            if (inv) inv.update({ eventType: "refreshItems" });
+        }
+	
+		/*
+        var itemObj:Object = game.world.myAvatar.getItemByID(int(o.ItemID));
+
+        var actObj:Object = null;
+
+        for each (var action:Object in game.world.actions.active) {
+            if (!action || action.ref != o.ref) continue;
+            actObj = action;
+			break;
+        }
+
+        if (!actObj)
+        {
+            trace("actObj is null");
+            trace("itemObj: " + JSON.stringify(itemObj));
+            return;
+        }
+
+        actObj.sArg1 = "";
+        actObj.sArg2 = "";
+        game.updateIcons(game.world.getActIcons(actObj), ["icu1"], null);
+
+        itemObj.bEquip = 0;
+
+        if (game.world.myAvatar.isMyAvatar) {
+            var inv:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcInventory"));
+            if (inv) inv.update({ eventType: "refreshItems" });
+        }
+		*/
+    }
+
+    private function DropItem(o:Object):void {
         for (var itemId:Object in o.items) {
             var fData:Object = null;
 
@@ -2021,6 +2132,8 @@ public class RequestHandler extends Object {
             } else {
                 fData = game.copyObj(game.world.invTree[itemId]);
                 fData.iQty = int(o.items[itemId].iQty);
+
+
 
 //                for (var invTreeKey:String in game.world.invTree[itemId])
 //                {
@@ -2036,25 +2149,52 @@ public class RequestHandler extends Object {
 //                }
             }
 
+            var currentItem123:Object = game.world.myAvatar.getItemByID(int(itemId));
+            var currentQty:Number = currentItem123 != null ? currentItem123.iQty : 0;
+            var maxCapacity:Number = fData.iStk - currentQty;
+
+            if (maxCapacity < 1) return;
+
             var dropItem:Object = game.world.getDropItem(int(itemId));
 
             if (dropItem != null)
             {
-			    dropItem.iQty = fData.iQty + dropItem.iQty > fData.iStk ? dropItem.iStk : dropItem.iQty + int(o.items[itemId].iQty);
+                dropItem.iQty = currentQty + dropItem.iQty + fData.iQty > fData.iStk ? fData.iStk - (currentQty + dropItem.iQty) : dropItem.iQty + fData.iQty;
+
+                if (dropItem.iQty < 1) return;
             }
             else
             {
-                game.world.dropMenu.push(game.copyObj(o.items[itemId]));
+                var item:Object = game.copyObj(game.copyObj(o.items[itemId]));
+
+                item.iQty = currentQty + fData.iQty > fData.iStk ? fData.iStk - (currentQty + dropItem.iQty) : fData.iQty;
+
+                if (item.iQty < 1) return;
+
+                trace("Drop Qty: " + item.iQty);
+
+                game.world.dropMenu.push(item);
             }
 
+//            var dropItem:Object = game.world.getDropItem(int(itemId));
+//
+//            if (dropItem != null)
+//            {
+////			    dropItem.iQty = fData.iQty + dropItem.iQty > fData.iStk ? dropItem.iStk : dropItem.iQty + int(o.items[itemId].iQty);
+////                dropItem.iQty = fData.iQty + dropItem.iQty > fData.iStk || dropItem.iQty + int(o.items[itemId].iQty) > fData.iStk ? fData.iStk : dropItem.iQty + int(o.items[itemId].iQty);
+//            }
+//            else
+//            {
+//                var item:Object = game.copyObj(game.copyObj(o.items[itemId]));
+//                item.iQty = item.iQty > item.iStk ? item.iStk : item.iQty;
+//                game.world.dropMenu.push(item);
+//            }
+
             if (game.ui.mcPopup.currentLabel == "Loot") {
-				trace("dropItem > LOOT");
                 var lootTemporary:MovieClip = MovieClip(game.ui.mcPopup.getChildByName("mcLoot"));
                 lootTemporary.itemsInv = game.world.dropMenu;
                 lootTemporary.update({"eventType": "refreshItems"});
-            } else {
-				trace("dropItem > LOOT SAD > " + game.ui.mcPopup.currentLabel);
-			}
+            }
 
             fData.dID = itemId;
             fData.dQty = int(o.items[itemId].iQty);
@@ -2577,8 +2717,8 @@ public class RequestHandler extends Object {
             else
             {
                 actObj = o.actions.active[ai];
-                actObj.sArg1 = "";
-                actObj.sArg2 = "";
+                actObj.sArg1 = actObj.hasOwnProperty("sArg1") ? actObj.sArg1 : "";
+                actObj.sArg2 = actObj.hasOwnProperty("sArg2") ? actObj.sArg2 : "";
                 game.world.actions.active.push(actObj);
                 actObj.ts = 0;
                 actObj.actID = -1;
@@ -2777,6 +2917,8 @@ public class RequestHandler extends Object {
                 game.world.rarity[rarity.id] = rarity;
             }
         }
+
+        game.musicChannel.stop();
     }
 
     private function Event(o:Object):void {

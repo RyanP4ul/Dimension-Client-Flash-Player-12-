@@ -177,6 +177,7 @@ import flash.text.TextField;
 
         private function initTabs():void
         {
+            trace("initTabs > 0");
             var mc:MovieClip;
             var iconClass:Object;
             var icon:DisplayObject;
@@ -186,11 +187,14 @@ import flash.text.TextField;
             var o:Object = {};
             var a:Array = [];
             var s:String = "";
+            trace("initTabs > 1");
             while (tabs.numChildren > 0)
             {
                 tabs.removeChildAt(0);
             }
+            trace("initTabs > 2");
             bgTabs.graphics.clear();
+            trace("initTabs > 3");
             j = 0;
             while (j < tabStates.length)
             {
@@ -217,14 +221,20 @@ import flash.text.TextField;
                 }
                 j++;
             }
+            trace("initTabs > 4");
             a = [];
             i = 0;
             while (i < tabStates.length)
             {
                 o = tabStates[i];
+                trace("initTabs > 4 > " + JSON.stringify(o));
+                trace("initTabs > 4.1");
                 mc = (tabs.addChild(new LPFElementListViewTab()) as MovieClip);
+                trace("initTabs > 4.2");
                 iconClass = getLayout().game.world.getClass(o.icon);
+                trace("initTabs > 4.3");
                 icon = mc.icon.addChild(new (iconClass)());
+                trace("initTabs > 4.4");
                 icon.scaleX = (icon.scaleY = (16 / icon.height));
                 icon.x = (icon.x - (icon.width / 2));
                 icon.y = 2;
@@ -261,7 +271,9 @@ import flash.text.TextField;
                 a.push(mc.getBounds(this.bgTabs));
                 i++;
             }
+            trace("initTabs > 5");
             drawTabBG();
+            trace("initTabs > 6");
         }
 
         private function fDraw(_arg_1:Boolean=true):void

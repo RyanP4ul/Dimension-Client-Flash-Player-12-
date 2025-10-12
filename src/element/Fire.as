@@ -1,14 +1,13 @@
 ﻿package element {
-	
+
 	import flash.display.MovieClip;
-	
-	
-	public class Fire extends MovieClip {
-		
-		
-		public function Fire() {
-			// constructor code
-		}
+
+public class Fire extends AbstractElement {
+
+	public function Fire() {
+		Type = "Fire";
+	}
+
 	}
 	
 }

@@ -18,7 +18,7 @@ package
         internal function frame36():*
         {
             stop();
-            MovieClip(parent).removeChild(this);
+//            MovieClip(parent).removeChild(this);
         }
 
 

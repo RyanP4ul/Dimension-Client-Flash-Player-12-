@@ -727,7 +727,16 @@ public class LPFLayoutInvShopEnh extends LPFLayout
                             else
                             {
                                 trace(((("iSel.sType: " + iSel.sType) + " iSel.sLink: ") + iSel.sLink));
-                                if (((((iSel.sType.toLowerCase() == "pet") || ((((iSel.sType.toLowerCase() == "item") && (!(String(iSel.sLink).toLowerCase() == ""))) && (!(String(iSel.sLink).toLowerCase() == " "))) && (!(String(iSel.sLink).toLowerCase() == "none")))) || (iSel.sES == "co")) || (iSel.sES == "am")))
+								
+								var type:String = iSel.sType.toLowerCase();
+								var link:String = String(iSel.sLink).toLowerCase();
+								var es:String = iSel.sES;
+								
+								var hasValidLink:Boolean = (link != "" && link != " " && link != "none");
+								var isItemOrPet:Boolean = (type == "pet") || (type == "potion" && hasValidLink);
+								var isEquippedSlot:Boolean = (es == "co" || es == "am");
+								
+                                if (isItemOrPet || isEquippedSlot)
                                 {
                                     _local_4.sMode = "red";
                                     if (iSel.bEquip == 1)

@@ -95,6 +95,7 @@ public class MonsterMC extends MovieClip
             bubble.visible = false;
             bubble.t = "";
             pname.ti.text = _arg_1;
+            pname.typ.text = "";
         }
 
         public function init():*
@@ -110,6 +111,7 @@ public class MonsterMC extends MovieClip
             shadow.mouseEnabled = (shadow.mouseChildren = false);
             mcChar.cacheAsBitmap = true;
             setVisible();
+            game.world.animationController.addClip(mcChar, this.name, 2.0);
         }
 
         private function onOptimizedEnterFrame(event:Event):void
@@ -174,6 +176,12 @@ public class MonsterMC extends MovieClip
                 pname.tt.textColor = pAV.objData.title.Color;
             } else {
                 pname.tt.text = "";
+            }
+
+            if (pname.typ.text.length < 1)
+            {
+                pname.tt.y = pname.ti.y;
+                pname.ti.y = pname.typ.y;
             }
         }
 
@@ -303,7 +311,9 @@ public class MonsterMC extends MovieClip
                 }
                 else
                 {
-                    mcChar.gotoAndPlay(_arg_1);
+                    trace("QueueAnim: " + _arg_1);
+                    game.world.animationController.gotoAndPlay(this.name, _arg_1, true);
+//                    mcChar.gotoAndPlay(_arg_1);
                 }
             }
         }
@@ -318,7 +328,9 @@ public class MonsterMC extends MovieClip
 
                 if (((_local_2.combatAnims.indexOf(_local_3) > -1) && (mcChar.currentFrame >= (_local_4 + 4))))
                 {
-                    mcChar.gotoAndPlay(animQueue[0]);
+                    trace("QueueAnim: " + animQueue[0]);
+                    game.world.animationController.gotoAndPlay(this.name, animQueue[0], true);
+//                    mcChar.gotoAndPlay(animQueue[0]);
                     animQueue.shift();
                     return true;
                 }

@@ -39,7 +39,7 @@ public class cMenuMC extends MovieClip
         fData.params = {};
         fData.user = ["Char Page", "Is Staff?", "Whisper", "Add Friend", "Go To", "Invite", "Delete Friend", "Ignore", "Trade", "Shops", "Examine", "Close"];
         fData.party = ["Char Page", "Whisper", "Add Friend", "Go To", "Remove", "Summon", "Promote", "Delete Friend", "Ignore", "Examine", "Close"];
-        fData.self = ["Char Page", "Reputation", "Leave Party", "Examine", "Close"];
+        fData.self = ["Char Page", "Reputation", "Leave Party", "Shop", "Examine", "Close"];
         fData.pvpqueue = ["Leave Queue", "Close"];
         fData.offline = ["Delete Friend", "Examine", "Close"];
         fData.ignored = ["Unignore", "Close"];

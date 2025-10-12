@@ -65,6 +65,11 @@ package Game_fla
                     Game.root.toggleWheel();
                 }
             }, {
+                "txt":"Achievements",
+                "fct": function () : void {
+                    Game.root.togglePopup("Achievements");
+                }
+            }, {
                 "txt":"Trade (Test)",
                 "fct": function () : void {
                     Game.root.toggleTrade();

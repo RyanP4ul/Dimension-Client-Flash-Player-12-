@@ -41,6 +41,7 @@ public class HouseMenu extends MovieClip
         internal var mox:int = 0;
         internal var moy:int = 0;
         internal var scrTgt:MovieClip;
+
         public function HouseMenu():void
         {
             visible = false;

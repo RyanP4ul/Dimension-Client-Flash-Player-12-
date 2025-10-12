@@ -1,14 +1,15 @@
 ﻿package element {
 	
 	import flash.display.MovieClip;
-	
-	
-	public class Earth extends MovieClip {
-		
-		
-		public function Earth() {
-			// constructor code
-		}
+import flash.events.MouseEvent;
+
+
+public class Earth extends AbstractElement {
+
+	public function Earth() {
+		Type = "Earth";
+	}
+
 	}
 	
 }

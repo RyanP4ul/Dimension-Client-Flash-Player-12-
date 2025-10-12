@@ -45,54 +45,54 @@ public class Towers extends MovieClip {
                 {
                     id: 1,
                     floor: "Floor 1",
-                    icon: "iwsword",
+                    image: "iwsword",
                     objectives: "Kill Boss",
                     duration: "18000" // 5 MINUTES
                 },
                 {
                     id: 2,
                     floor: "Floor 2",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 3,
                     floor: "Floor 3",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 4,
                     floor: "Floor 4",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 5,
                     floor: "Floor 5",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 6,
                     floor: "Floor 6",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 7,
                     floor: "Floor 7",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 8,
                     floor: "Floor 8",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 9,
                     floor: "Floor 9",
-                    icon: "iwsword"
+                    image: "iwsword"
                 },
                 {
                     id: 10,
                     floor: "Floor 10",
-                    icon: "iwsword"
+                    image: "iwsword"
                 }
             ]
         },

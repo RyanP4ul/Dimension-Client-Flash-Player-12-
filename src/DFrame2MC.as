@@ -227,7 +227,11 @@ public class DFrame2MC extends MovieClip
                 _local_2 = false;
             }
 
-            if (invItem != null && invItem.iQty >= fData.iStk)
+            var dropItem:Object = game.world.getDropItem(fData.ItemID);
+
+            if (dropItem == null) return;
+
+            if (invItem != null && invItem.iQty + dropItem.iQty >= fData.iStk)
             {
                 game.MsgBox.notify("The quantity has reached the maximum limit.")
             }
@@ -247,7 +251,7 @@ public class DFrame2MC extends MovieClip
                 _local_5.cnt.ybtn.mouseEnabled = false;
                 _local_5.cnt.ybtn.mouseChildren = false;
                 refreshItemLootDrop();
-                game.net.send("getDrop", [fData.ItemID]);
+                game.net.send("getDrop", [fData.ItemID + ":" + dropItem.iQty]);
             }
         }
 

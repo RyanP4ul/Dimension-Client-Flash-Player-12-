@@ -81,11 +81,14 @@ public class MapBuilder extends MovieClip {
 
             var element:MovieClip = createBaseElement(data.type, data);
 
-            if (game.world.myAvatar.isStaff()) {
-                element.data = data;
-                addHandler(element, data);
-                addForm(element, data);
-                ApplyLock(element);
+            try {
+                if (game.world.myAvatar.isStaff()) {
+                    element.data = data;
+                    addHandler(element, data);
+                    addForm(element, data);
+                    ApplyLock(element);
+                }
+            } catch (e:Error) {
             }
 
             if (data.type == "Arrow") {

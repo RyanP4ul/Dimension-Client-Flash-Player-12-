@@ -27,7 +27,6 @@ public class AvatarMC extends MovieClip {
     public var pname:MovieClip;
     public var ignore:MovieClip;
     public var shadow:MovieClip;
-    public var collider:MovieClip;
     public var currentCollision:MovieClip;
     public var Sounds:MovieClip;
     public var fx:MovieClip;
@@ -112,8 +111,6 @@ public class AvatarMC extends MovieClip {
         addFrameScript(0, frame1, 4, frame5, 7, frame8, 9, frame10, 11, frame12, 12, frame13, 13, frame14, 17, frame18, 19, frame20, 22, frame23);
         Sounds.visible = false;
         ignore.visible = false;
-		collider.visible = false;
-        collider.mouseEnabled = false;
 
         try {
             var assetClass:Class = (game.params.domain.avatar.getDefinition("mcSkel")) as Class;
@@ -290,25 +287,25 @@ public class AvatarMC extends MovieClip {
     }
 
     private function onClickHandler(event:MouseEvent):void {
-        world = MovieClip(stage.getChildAt(0)).world;
-        var avt:Avatar = event.currentTarget.parent.pAV;
+        try {
+            world = MovieClip(stage.getChildAt(0)).world;
+            var avt:Avatar = event.currentTarget.parent.pAV;
 
-//        if (avt.pMC.isNpc) {
-//            return;
-//        }
-
-        if (event.shiftKey) {
-            world.onWalkClick();
-        } else {
-            if (!event.ctrlKey) {
-                if (((((!(avt == world.myAvatar)) && (world.bPvP)) && (!(avt.dataLeaf.pvpTeam == world.myAvatar.dataLeaf.pvpTeam))) && (avt == world.myAvatar.target))) {
-                    world.approachTarget();
-                } else {
-                    if (avt != world.myAvatar.target) {
-                        world.setTarget(avt);
+            if (event.shiftKey) {
+                world.onWalkClick();
+            } else {
+                if (!event.ctrlKey) {
+                    if (((((!(avt == world.myAvatar)) && (world.bPvP)) && (!(avt.dataLeaf.pvpTeam == world.myAvatar.dataLeaf.pvpTeam))) && (avt == world.myAvatar.target))) {
+                        world.approachTarget();
+                    } else {
+                        if (avt != world.myAvatar.target) {
+                            world.setTarget(avt);
+                        }
                     }
                 }
             }
+        } catch(e:Error) {
+
         }
     }
 
@@ -2015,27 +2012,6 @@ public class AvatarMC extends MovieClip {
             _local_3++;
         }
     }
-	
-	public function playerCollisionCheck(targets:Array) : void {
-	    for each (var target:MovieClip in targets)
-		{
-		    if (target == null 
-			    || currentCollision != null 
-			    || !collider.hitTestObject(target)
-			) continue;
-
-			currentCollision = target;
-
-            Game.root.net.send("collision", ["true", currentCollision.name]);
-		}
-		
-		if (currentCollision != null && !collider.hitTestObject(currentCollision))
-		{
-            Game.root.net.send("collision", ["false", currentCollision.name]);
-			currentCollision = null;
-		}
-	}
-
     public function KeepAnimation(avt:Avatar, eqp:String) : void {
         switch (eqp) {
             case "Weapon":

@@ -1236,6 +1236,7 @@ public class Avatar {
     }
 
     public function isStaff():Boolean {
+        if (objData == null || !objData.hasOwnProperty("intAccessLevel")) return false;
         return (objData.intAccessLevel >= 40);
     }
 

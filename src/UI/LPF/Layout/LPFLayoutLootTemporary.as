@@ -239,6 +239,9 @@ public class LPFLayoutLootTemporary extends LPFLayout  {
                         {
                             var drop:Object = game.world.getDropItem(iSel.ItemID);
 
+                            trace("KEEP ITEM > 0");
+                            trace("DROP: " + JSON.stringify(drop));
+
                             if (drop != null)
                             {
                                 if (drop.iQty == o.iQty)

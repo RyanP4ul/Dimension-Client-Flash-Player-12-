@@ -109,7 +109,7 @@ import flash.events.MouseEvent;
                 "h":340
             };
             _local_4.tabStates = MovieClip(fParent).getTabStates(null, ["*"]);
-            _local_4.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item"];
+            _local_4.sortOrder = ["Note", "Resource", "Item", "Potion", "Quest Item", "ServerUse", "Enhancement", "Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Ring", "Amulet", "Belt", "Pet", "House", "Wall Item", "Floor Item"];
             _local_4.filterMap = {
                 "Weapon":["Sword", "Axe", "Dagger", "Gun", "Bow", "Mace", "Polearm", "Staff", "Wand"],
                 "ar":["Class", "Armor"],
@@ -117,7 +117,7 @@ import flash.events.MouseEvent;
                 "ba":["Cape"],
                 "pe":["Pet"],
                 "am":["Amulet", "Necklace"],
-                "it":["Note", "Resource", "Item", "Quest Item", "ServerUse", "House", "Wall Item", "Floor Item"],
+                "it":["Note", "Resource", "Item", "Quest Item", "Potion", "ServerUse", "House", "Wall Item", "Floor Item"],
                 "enh":["Enhancement"]
             };
             _local_4.sName = "bank";

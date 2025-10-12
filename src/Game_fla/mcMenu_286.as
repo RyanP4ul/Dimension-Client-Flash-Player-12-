@@ -160,12 +160,15 @@ import flash.display.MovieClip;
                     handleMenu(MovieClip(event.currentTarget));
                     return;
                 case "btnHouse":
+                    trace("btnHouse > 1");
                     if (game.world.isHouseEquipped())
                     {
+                        trace("btnHouse > House Equipped");
                         game.world.gotoHouse(game.net.myUserName);
                     }
                     else
                     {
+                        trace("btnHouse > No House");
                         game.world.gotoTown("buyhouse", "Enter", "Spawn");
                     }
                     return;

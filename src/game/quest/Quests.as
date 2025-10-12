@@ -327,13 +327,14 @@ public class Quests extends MovieClip {
                 for (var j:String in rewardObject[_rewardTypeOrder[i]])
                 {
                     var cnt:DFrameMCcnt = new DFrameMCcnt();
+                    var rarity:Object = game.world.rarity[rewardObject[_rewardTypeOrder[i]][j].iRty];
 
                     cnt.name = "r-" + rewardObject[_rewardTypeOrder[i]][j].Data.ItemID;
                     cnt.data = rewardObject[_rewardTypeOrder[i]][j].Data;
                     cnt.strName.text = rewardObject[_rewardTypeOrder[i]][j].Data.sName;
                     cnt.strQ.text = "x" + int(rewardObject[_rewardTypeOrder[i]][j].iQty); // int(rewardObject[i][j].iQty) < 2 ? "" : "x" + int(rewardObject[i][j].iQty);
                     cnt.strRate.text = int(rewardObject[_rewardTypeOrder[i]][j].iRate) + "%";
-                    cnt.strType.text = rewardObject[_rewardTypeOrder[i]][j].Data.sType;
+                    cnt.strType.text = (rarity != null ? "<font color='" + String(rarity.Color).replace("0x", "#") + "'>" + rarity.Name + " Rarity" : "Unknown Rarity") + " • " +  rewardObject[_rewardTypeOrder[i]][j].Data.sType;
 
                     cnt.buttonMode = true;
                     cnt.mouseEnabled = true;

@@ -49,7 +49,7 @@ public class Queue {
             _linkage = item.linkage;
             _isLoading = true;
 
-            game.onLoadMaster(item.onComplete, Game.root.world.loaderC, item.file, item.onProgress, item.onError);
+            game.onLoadMaster(item.onComplete, item.context, item.file, item.onProgress, item.onError);
         } else {
             _isLoading = false;
         }

@@ -5,47 +5,18 @@
 
 package Game_fla
 {
-import com.greensock.TweenLite;
-
-import fl.motion.Color;
+import features.AnimationController;
+import features.AnimationEvent;
+import features._AnimationController;
+import features.FloatingDisplayHandler;
 
 import flash.display.MovieClip;
-    import flash.display.SimpleButton;
-    import flash.text.TextField;
-    import flash.utils.Dictionary;
-    import flash.net.navigateToURL;
-    import flash.net.URLRequest;
-    import flash.events.MouseEvent;
-    import flash.events.Event;
-    import flash.display.*;
-    import flash.events.*;
-    import flash.text.*;
-    import flash.net.*;
-    import flash.media.*;
-    import flash.geom.*;
-    import flash.system.*;
-    import flash.utils.*;
-    import flash.filters.*;
-    import flash.external.*;
-    import flash.ui.*;
-    import adobe.utils.*;
-    import flash.accessibility.*;
-    import flash.errors.*;
-    import flash.printing.*;
-    import flash.profiler.*;
-    import flash.sampler.*;
-    import flash.xml.*;
-
-import game.builder.MapBuilder;
-import game.builder.MapWalkable;
-import game.config.ConfigurationData;
-import game.handler.DisplayHandler;
-import game.utils.Queue;
-
-import popup.Stats.StatsListItem;
-import popup.Stats.StatsSubItem;
-
-import test.Characters;
+import flash.display.SimpleButton;
+import flash.events.*;
+import flash.system.ApplicationDomain;
+import flash.system.LoaderContext;
+import flash.text.TextField;
+import flash.utils.*;
 
 public dynamic class game_1_cnt_6 extends MovieClip
     {
@@ -85,99 +56,49 @@ public dynamic class game_1_cnt_6 extends MovieClip
         private function Characters(): void { stop(); }
         private function CreateCharacter(): void { stop(); }
 
-        private var data:Object = {
-            "1": {
-                "Name": "Iron",
-                "Linkage": "Iron",
-                "PropMapID": 1,
-                "File": "Iron.swf"
-            },
-            "2": {
-                "Name": "Flower",
-                "Linkage": "Flower1",
-                "PropMapID": 2,
-                "File": "Flower1_r2.swf"
-            },
-            "r-2": {
-                "Name": "Tree",
-                "Linkage": "Tree1",
-                "File": "Tree1.swf"
-            }
-        };
-
-        public var queue:Queue = new Queue();
+        public var timer:Timer = new Timer(1000);
         public var loaderD:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
         public var loaderC:LoaderContext = new LoaderContext(false, loaderD);
+        public var animController:AnimationController = new AnimationController(stage);
 
         private function Test(): void {
-            for each (var o:Object in data)
-            {
-                trace("Test > " + o.File + ", " + o.Linkage);
-                queue.add("props/" + o.File, o.Linkage, function():void {
+            loaderC.checkPolicyFile = false;
+            loaderC.allowCodeImport = true;
 
-                    trace("Loaded > " + queue.File + ", " + queue.Linkage + " (" + queue.Count + " left)");
+            Game.root.onLoadMaster(onMonComplete, loaderC, "mon/Slimegreen.swf");
 
-                    if (queue.Count == 0)
-                    {
-                        var assetClass:Class = loaderD.getDefinition("Iron") as Class;
-                        var prop:MovieClip = new (assetClass);
-                        prop.y = 300;
-                        addChild(prop);
+            animController.addEventListener(AnimationController.ANIMATION_END, onAnimEnd);
 
-                        var assetClass1:Class = loaderD.getDefinition("Flower1") as Class;
-                        var prop1:MovieClip = new (assetClass1);
-                        prop1.x = 400;
-                        prop1.y = 300;
-                        addChild(prop1);
-
-                        var assetClass2:Class = loaderD.getDefinition("Tree1") as Class;
-                        var prop2:MovieClip = new (assetClass2);
-                        prop2.x = 700;
-                        prop2.y = 300;
-                        addChild(prop2);
-
-                        trace("ALL DONE!");
-                    }
-
-                    queue.next();
-
-                }, null, loaderC);
-            }
             stop();
         }
 
-//        private function Test(): void {
-//            rewardLists = new MovieClip();
-//            rewardLists.x = 0;
-//            rewardLists.y = 0;
-//            addChild(rewardLists);
-//
-//            rewardObject = Game.root.objectSort(["Static", "Choice", "Roll", "Random"], rewardObject);
-//
-//            for (var i:String in rewardObject)
-//            {
-//                trace(i);
-//                var property : MovieClip = reward["reward" + i];
-//                property.visible = true;
-//                property.y = (rewardLists.numChildren * 47) + 15;
-//                rewardLists.addChild(property);
-//
-//                var ct:int = 0;
-//
-//                for (var j:String in rewardObject[i])
-//                {
-//                    var cnt:DFrameMCcnt = new DFrameMCcnt();
-//
-//                    cnt.x = 0;
-//                    cnt.y = (ct * 47);
-//                    ct++;
-//
-//                    rewardLists.addChild(cnt);
-//                }
-//            }
-//
-//            stop();
-//        }
+        function onAnimEnd(e:AnimationEvent):void
+        {
+            trace("Animation ended:", e.clip.name, "Label:", e.label);
+//            animController.gotoAndPlay(e.clip, "Idle");
+        }
+
+        private function onMonComplete(event:Event) : void {
+            var assetClass:Class = loaderD.getDefinition("Slimegreen") as Class;
+            var mon:MovieClip = new (assetClass);
+            mon.x = 500;
+            mon.y = 350;
+            addChild(mon);
+
+            animController.addClip(mon, "Monster-1", 2.0);
+
+            timer.addEventListener(TimerEvent.TIMER, function (e:TimerEvent) : void {
+                var heal:sp_eh1 = new sp_eh1();
+                heal.x = 500;
+                heal.y = 350;
+                addChild(heal);
+                animController.addClip(heal, "Heal-1", 2.0);
+
+                animController.gotoAndPlay("Monster-1", "Attack1", true);
+            });
+
+            timer.start();
+        }
 
     }
 }//package Game_fla

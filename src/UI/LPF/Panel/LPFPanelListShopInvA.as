@@ -267,7 +267,7 @@ import flash.text.*;
                 "h": isShop ? _local_4 - 30 : (isOutfit || isLoot || isTemp ? _local_4 + 20 : _local_4)
             };
             _local_3.tabStates = MovieClip(fParent).getTabStates();
-            _local_3.sortOrder = ["Note", "Resource", "Item", "Quest Item", "ServerUse", "Enhancement", "Rune", "Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring", "Pet", "BattlePet"];
+            _local_3.sortOrder = ["Note", "Resource", "Item", "Potion", "Quest Item", "ServerUse", "Enhancement", "Rune", "Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand", "Class", "Armor", "Helm", "Cape", "Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring", "Pet", "BattlePet"];
             _local_3.filterMap = {
                 "Weapon":["Sword", "Axe", "Gauntlet", "Dagger", "HandGun", "Rifle", "Gun", "Whip", "Bow", "Mace", "Polearm", "Staff", "Wand", "Rune"],
                 "ar":["Class", "Armor"],
@@ -275,10 +275,10 @@ import flash.text.*;
                 "ba":["Cape"],
                 "pe":["Pet", "BattlePet"],
                 "am":["Misc", "Earring", "Amulet", "Necklace", "Belt", "Ring"],
-                "it":["Note", "Resource", "Item", "Quest Item", "ServerUse"],
+                "it":["Note", "Resource", "Item", "Quest Item", "ServerUse", "Potion"],
                 "enh":["Enhancement"],
                 "houseitems":["House", "Wall Item", "Floor Item"],
-                "pots":["Item"]
+                "pots":["Potion"]
             };
             _local_3.sName = "itemListA";
             _local_3.sTypeSort = "default";

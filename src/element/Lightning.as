@@ -1,14 +1,15 @@
 ﻿package element {
 	
 	import flash.display.MovieClip;
-	
-	
-	public class Lightning extends MovieClip {
-		
-		
-		public function Lightning() {
-			// constructor code
-		}
+import flash.events.MouseEvent;
+
+
+public class Lightning extends AbstractElement {
+
+	public function Lightning() {
+		Type = "Lightning";
+	}
+
 	}
 	
 }

@@ -80,39 +80,44 @@ package UI
 
         private function slide(event:Event):void
         {
-            var bar:MovieClip = MovieClip(event.currentTarget);
-            date = new Date();
-            var len:Number = (date.getTime() - ts);
-            var pc:Number = (len / dur);
+            try {
+                var bar:MovieClip = MovieClip(event.currentTarget);
+                date = new Date();
+                var len:Number = (date.getTime() - ts);
+                var pc:Number = (len / dur);
 
-            if (game.world.myAvatar.pMC.mcChar.onMove) // (game.world.mvTimerObj != null)
-            {
-                mc.gotoAndPlay("out");
-                bar.removeEventListener(Event.ENTER_FRAME, slide);
-                mc.cnt.tip.removeEventListener(Event.ENTER_FRAME, tipFollow);
-                fClose();
-            }
-            else if (pc >= 1)
-            {
-                if (o.hasOwnProperty("repeat") && Boolean(o.repeat))
-                {
-                    date = new Date();
-                    ts = date.getTime();
-                    mc.gotoAndPlay("in");
-                }
-                else
+                if (game.world.myAvatar.pMC.mcChar.onMove) // (game.world.mvTimerObj != null)
                 {
                     mc.gotoAndPlay("out");
                     bar.removeEventListener(Event.ENTER_FRAME, slide);
                     mc.cnt.tip.removeEventListener(Event.ENTER_FRAME, tipFollow);
                     fClose();
                 }
+                else if (pc >= 1)
+                {
+                    if (o.hasOwnProperty("repeat") && Boolean(o.repeat))
+                    {
+                        date = new Date();
+                        ts = date.getTime();
+                        mc.gotoAndPlay("in");
+                    }
+                    else
+                    {
+                        mc.gotoAndPlay("out");
+                        bar.removeEventListener(Event.ENTER_FRAME, slide);
+                        mc.cnt.tip.removeEventListener(Event.ENTER_FRAME, tipFollow);
+                        fClose();
+                    }
 
-                fCallback();
-            }
-            else
-            {
-                bar.x = ((mc.cnt.fill.x - mc.cnt.fillMask.width) + (run * pc));
+                    fCallback();
+                }
+                else
+                {
+                    bar.x = ((mc.cnt.fill.x - mc.cnt.fillMask.width) + (run * pc));
+                }
+            } catch (e:Error) {
+                if (bar.hasEventListener(Event.ENTER_FRAME))
+                    bar.removeEventListener(Event.ENTER_FRAME, slide);
             }
         }
 
