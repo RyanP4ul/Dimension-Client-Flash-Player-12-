@@ -4576,41 +4576,6 @@ public class Game extends MovieClip {
         return timestamp + "%" + randomPart;
     }
 
-    public function updateCharacterImage():void {
-        var mc:MovieClip = world.myAvatar.pMC.mcChar;
-        if (!mc) return;
-
-        var bounds:Rectangle = mc.getBounds(mc);
-
-        var scale:Number = 2; // <- make it bigger (2x, 3x, etc.)
-
-        var w:int = Math.max(1, Math.ceil(bounds.width  * scale));
-        var h:int = Math.max(1, Math.ceil(bounds.height * scale));
-
-        var mtx:Matrix = new Matrix();
-        mtx.scale(scale, scale);
-        mtx.translate(-bounds.x * scale, -bounds.y * scale);
-
-        var bmd:BitmapData = new BitmapData(w, h, true, 0x00000000);
-        bmd.draw(mc, mtx, null, null, null, true); // smoothing = true
-
-        var png:ByteArray = PNGEncoder.encode(bmd);
-
-        var req:URLRequest = new URLRequest(serverBaseURL + "api/game/character/" +
-            world.myAvatar.objData.CharID + "/image/");
-        req.method = URLRequestMethod.POST;
-        req.contentType = "image/png";
-        req.data = png;
-
-        var loader:URLLoader = new URLLoader();
-        loader.addEventListener(Event.COMPLETE, function(e:Event):void {
-            trace("Character Image Updated!");
-        });
-        loader.load(req);
-
-        bmd.dispose();
-    }
-
     public function cloneAsBitmap(target:DisplayObject):Bitmap {
         var bounds:Rectangle = target.getBounds(target);
         if (bounds.width <= 0 || bounds.height <= 0) {

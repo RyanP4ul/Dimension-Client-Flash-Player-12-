@@ -12,23 +12,9 @@ import UI.Display.auraDisplay;
 
 import UI.ModalMC;
 
-import com.greensock.TweenLite;
-import com.greensock.easing.Quad;
-
-import element.Dark;
-
-import element.Earth;
-
-import element.Fire;
-import element.Ice;
-import element.Light;
-import element.Lightning;
-import element.Nature;
-import element.Water;
-import element.Wind;
+import element.*;
 
 import features.AnimationController;
-import features.AnimationEvent;
 
 import flash.display.Bitmap;
 import flash.display.BitmapData;
@@ -49,6 +35,8 @@ import flash.geom.Matrix;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.media.Sound;
+import flash.media.SoundChannel;
+import flash.media.SoundTransform;
 import flash.net.URLLoader;
 import flash.net.URLLoaderDataFormat;
 import flash.net.URLRequest;
@@ -62,8 +50,6 @@ import flash.utils.getQualifiedClassName;
 import flash.utils.getTimer;
 
 import game.builder.BuilderObjectDraggable;
-import game.builder.MapProp;
-
 import game.builder.MapWalkable;
 
 import game.config.ConfigurationData;
@@ -73,13 +59,15 @@ import game.utils.Queue;
 import game.npc.NpcButton;
 import game.quest.Quests;
 
+import features.map.MapMusic;
+
 import types.DomainInfo;
 
 public class World extends MovieClip {
 
     public static var currentInstance:World;
 
-    private const TICK_MAX:int = 40;
+    private const TICK_MAX:int = 30;
 
     public var textDisplay:Array = [];
     public var dropMenu:Array = [];
@@ -99,9 +87,14 @@ public class World extends MovieClip {
     public var strAreaName:String = "";
     public var strMapName:String;
     public var strMapFileName:String;
+    public var strMapMusic:String;
+    public var intMapMusicVolume:int;
+    public var bMapMusic:Boolean = true;
+    public var mapMusicButton:MapMusic;
     public var isFloor:Boolean = false;
     public var isDungeon:Boolean = false;
     public var isTimeline:Boolean = false;
+    public var bMapHasImage:Boolean = false;
     public var floorDuration:int = 30;
     public var strMonName:String;
     public var intType:int;
@@ -158,12 +151,10 @@ public class World extends MovieClip {
     public var scrollData:Object;
     public var loaderD:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
     public var loaderC:LoaderContext = new LoaderContext(false, loaderD);
-
     public var loaderF:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
     public var loaderE:LoaderContext = new LoaderContext(false, loaderF);
-
-    public var loaderContents:* = [];
-    public var loaderContentsFileNames:* = [];
+    public var mapMusic:Sound;
+    public var mapMusicChannel:SoundChannel;
     public var loaderQueue:Array = [];
     public var playerDomains:Object = {};
     public var loaderManager:Object = {
@@ -897,6 +888,19 @@ public class World extends MovieClip {
     public function loadMap(strFilename:String):void {
         game.mcConnDetail.showConn("Loading Map Files...");
 
+        if (mapMusic && mapMusicChannel) {
+            mapMusicChannel.stop();
+            mapMusic = null;
+            mapMusicChannel = null;
+            strMapMusic = null;
+            intMapMusicVolume = 100;
+        }
+
+        if (mapMusicChannel) {
+            mapMusicChannel.stop();
+            mapMusicChannel = null;
+        }
+
         if (map != null) {
             this.removeChild(map);
             map = null;
@@ -922,10 +926,11 @@ public class World extends MovieClip {
         game.ui.visible = true;
         mapLoadInProgress = false;
         mapEntered = false;
+
         map = MovieClip(Loader(event.target.loader).content);
         map.cacheAsBitmap = true;
-        addChildAt(map, 0).x = 0;
-        CHARS.x = 0;
+
+        addChildAt(map, 0).x = CHARS.x = 0;
 
 //        if (game.preference.data.cache.map.enabled && !(strFilename in game.cache.maps))
 //        {
@@ -939,15 +944,11 @@ public class World extends MovieClip {
 
         resetSpawnPoint();
 
-        if (mondef != null && monmap.length > 0) {
-            initMonsters(mondef, monmap);
-        } else if (npcmap != null && npcmap.length > 0) {
-            initNpcs(npcdef, npcmap);
-        } else if (props != null) {
-            initProps();
-        } else {
-            enterMap();
-        }
+        if (mondef && monmap.length > 0) initMonsters(mondef, monmap);
+        else if (npcmap && npcmap.length > 0) initNpcs(npcdef, npcmap);
+        else if (props) initProps();
+        else if (strMapMusic) initMusic();
+        else enterMap();
 
         if (isMyHouse()) game.ui.mcPopup.fOpen("House");
     }
@@ -972,26 +973,17 @@ public class World extends MovieClip {
 
         mapEntered = true;
 
-        var uotf:Object = uoTreeLeaf(game.net.myUserName);
+        const uotf:Object = uoTreeLeaf(game.net.myUserName);
+        const cell:String = (intType == 0 || !returnInfo) ? uotf.strFrame : returnInfo.strCell;
+        const pad:String = (intType == 0 || !returnInfo) ? uotf.strPad : returnInfo.strPad;
 
-        if (intType == 0 || returnInfo == null) {
-            moveToCell(uotf.strFrame, uotf.strPad);
-        } else {
-            moveToCell(returnInfo.strCell, returnInfo.strPad);
-            returnInfo = null;
-        }
+        moveToCell(cell, pad);
+        returnInfo = null;
 
-        if (isFloor)
-        {
-            game.ui.mcPvEDuration.start(floorDuration);
-        }
-        else
-        {
-            game.ui.mcPvEDuration.close();
-        }
+        if (isFloor) game.ui.mcPvEDuration.start(floorDuration);
+        else game.ui.mcPvEDuration.close();
 
         initMapEvents();
-
         game.mcConnDetail.hideConn();
         game.ui.mcInterface.areaList.visible = true;
 
@@ -4057,15 +4049,6 @@ public class World extends MovieClip {
         game.net.send("cmd", ["mute", _arg_1, "minutes", myAvatar.objData.strUsername.toLowerCase()]);
     }
 
-    public function getAvailablePotionSlots() : String
-    {
-        if (!game.equipPotion1) // && !game.equipPotion2
-            return "i1";
-        else if (!game.equipPotion2) // && !game.equipPotion1
-            return "i2";
-
-        return "none";
-    }
 
     public function equipUseableItem(itemObj:Object):void {
         if (itemObj == null)
@@ -4712,7 +4695,11 @@ public class World extends MovieClip {
     }
 
     public function initMonsters(definition:Object, map:Array) : void {
-        if (definition == null || map.length < 1) return;
+        if (definition == null || map.length < 1 || game.preference.data.bDisLoadMon)
+        {
+            initNpcs(npcdef, npcmap);
+            return;
+        }
 
         game.mcConnDetail.showConn("Loading Monsters...");
 
@@ -4742,16 +4729,9 @@ public class World extends MovieClip {
             monsters.push(mon);
         }
 
-        if (game.preference.data.bDisLoadMon)
+        for (prop in definition)
         {
-            initNpcs(npcdef, npcmap);
-        }
-        else
-        {
-            for (prop in definition)
-            {
-                queue.add("mon/" + definition[prop].strMonFileName, String(definition[prop].strLinkage), onMonsterComplete, onMonsterProgress, game.cache.monsterContext);
-            }
+            queue.add("mon/" + definition[prop].strMonFileName, String(definition[prop].strLinkage), onMonsterComplete, onMonsterProgress, game.cache.monsterContext);
         }
     }
 
@@ -4769,98 +4749,126 @@ public class World extends MovieClip {
     }
 
     public function initNpcs(md:Array, mp:Array):void {
-        var npcObj:Object;
-        var j:int;
-        var Npc:*;
-        var prop:*;
-        var npcLeaf:*;
-        var i:int;
-        if (((!(md == null)) && (!(mp == null))))
-        {
-            npcs = [];
-            npcObj = null;
-            i = 0;
-            while (i < mp.length)
-            {
-                j = 0;
-                while (j < md.length)
-                {
-                    if (mp[i].NpcID == md[j].NpcID)
-                    {
-                        npcObj = md[j];
-                    }
-                    j++;
-                }
-                npcs.push(new Avatar(game));
-                Npc = npcs[(npcs.length - 1)];
-                Npc.npcType = "npc";
-                if (Npc.objData == null) Npc.objData = {};
-
-                for (prop in npcObj) Npc.objData[prop] = npcObj[prop];
-                for (prop in mp[i]) Npc.objData[prop] = mp[i][prop];
-
-                npcLeaf = npcTree[String(Npc.objData.NpcMapID)];
-                npcLeaf.strFrame = String(Npc.objData.strFrame);
-
-                Npc.dataLeaf = npcLeaf.NpcID == Npc.objData.NpcID ? npcTree[Npc.objData.NpcMapID] : null;
-
-                i++;
-            }
-
-        }
-
-        initProps();
-        
-    }
-
-//    public function toggleMonsters():* {
-//        var _local_1:DisplayObject;
-//        game.ui.monsterIcon.redX.visible = showMonsters;
-//        showMonsters = (!(showMonsters));
-//        var _local_2:int;
-//        while (_local_2 < CHARS.numChildren) {
-//            _local_1 = CHARS.getChildAt(_local_2);
-//            if (((_local_1.hasOwnProperty("isMonster")) && (MovieClip(_local_1).isMonster))) {
-//                MovieClip(_local_1).setVisible();
-//            }
-//            _local_2++;
-//        }
-//    }
-
-    public function initProps() : void {
-		trace("INIT PROPS > ====================================");
-        trace("PROPS DATA: " + JSON.stringify(props));
-        if (props == null)
-        {
-			enterMap();
+        if (!md || !mp) {
+            initProps();
             return;
         }
 
-		trace("===============================");
+        game.mcConnDetail.showConn("Loading NPCs...");
+        npcs = [];
+
+        for each (var mpEntry:Object in mp) {
+            var npcObj:Object = null;
+            for each (var mdEntry:Object in md) {
+                if (mpEntry.NpcID == mdEntry.NpcID) {
+                    npcObj = mdEntry;
+                    break;
+                }
+            }
+            if (!npcObj) continue;
+
+            var npc:Avatar = new Avatar(game);
+            npc.npcType = "npc";
+            npc.objData ||= {};
+
+            for (var prop:String in npcObj) npc.objData[prop] = npcObj[prop];
+            for (prop in mpEntry) npc.objData[prop] = mpEntry[prop];
+
+            var npcLeaf:Object = npcTree[String(npc.objData.NpcMapID)];
+            npcLeaf.strFrame = String(npc.objData.strFrame);
+            npc.dataLeaf = (npcLeaf.NpcID == npc.objData.NpcID) ? npcLeaf : null;
+
+            npcs.push(npc);
+        }
+
+        initProps();
+    }
+
+    public function initProps() : void {
+        if (props == null)
+        {
+			initMusic();
+            return;
+        }
+
+        game.mcConnDetail.showConn("Loading Props...");
+
 		for each (var o:Object in props)
 		{
             if (loaderD.hasDefinition(o.Linkage)) continue;
             trace(o.Name);
 			queue.add("props/" + o.File, o.Linkage, onPropComplete, onPropProgress, loaderC);
 		}
-		trace("===============================");
     }
 
     private function onPropComplete(event:Event) : void {
-		        if (queue.Count == 0 && !mapEntered)
+        if (queue.Count == 0)
         {
-            trace("Prop Enter Map");
-            enterMap();
+            initMusic();
         }
-	
-//        trace("PROP COMPLETE 1 > " + queue.File + " > " + queue.Count);
+
         queue.next();
-//		trace("PROP COMPLETE 2 > " + queue.File + " > " + queue.Count);
     }
 
     private function onPropProgress(event:ProgressEvent) : void {
         game.mcConnDetail.showConn("Loading Prop (" + queue.File.replace("props/", "") + ") " + (int(event.bytesLoaded / event.bytesTotal) * 100) + "%");
     }
+
+    private function initMusic() : void {
+        if (strMapMusic == null || !game.uoPref.bSoundOn)
+		{
+			enterMap();
+			return;
+		}
+
+        var request:URLRequest = new URLRequest("http://localhost:3000/Limbo.mp3");
+
+        mapMusic = new Sound();
+        mapMusic.addEventListener(Event.COMPLETE, onMapMusicComplete);
+        mapMusic.addEventListener(ProgressEvent.PROGRESS, onMapMusicProgress);
+        mapMusic.addEventListener(IOErrorEvent.IO_ERROR, onMapMusicError);
+        mapMusic.load(request);
+    }
+
+    private function onMapMusicComplete(event:Event) : void {
+        mapMusicChannel = mapMusic.play(0, int.MAX_VALUE);
+        playMapMusic();
+        createButtonMapMusic();
+        enterMap();
+    }
+
+    private function onMapMusicProgress(event:ProgressEvent) : void {
+        game.mcConnDetail.showConn("Loading Map Music " + (int(event.bytesLoaded / event.bytesTotal) * 100) + "%");
+    }
+
+    public function createButtonMapMusic() : void {
+        if (mapMusicButton)
+        {
+            removeChild(mapMusicButton);
+            mapMusicButton = null;
+        }
+
+        mapMusicButton = new MapMusic();
+        mapMusicButton.x = (ConfigurationData.CLIENT_WIDTH - mapMusicButton.width) / 2;
+        mapMusicButton.y = 20;
+        addChild(mapMusicButton);
+    }
+
+    public function playMapMusic() : void {
+        if (mapMusic != null && game.uoPref.bSoundOn) {
+            if (mapMusicChannel != null) {
+                mapMusicChannel.stop();
+            }
+            mapMusicChannel = mapMusic.play(0, int.MAX_VALUE);
+            mapMusicChannel.soundTransform = new SoundTransform(intMapMusicVolume / 100);
+        }
+    }
+
+    private function onMapMusicError(event:IOErrorEvent) : void {
+        trace("Error loading map music: " + event.text);
+        enterMap();
+    }
+
 
     public function setTarget(_arg_1:*):* {
         if (myAvatar != null && !myAvatar.target != _arg_1) {

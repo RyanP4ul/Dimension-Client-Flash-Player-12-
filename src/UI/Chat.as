@@ -37,6 +37,8 @@ import flash.display.MovieClip;
     import flash.net.URLRequest;
     import flash.display.DisplayObjectContainer;
 
+import utils.SwfToImageConverter;
+
 public class Chat
     {
 
@@ -2309,8 +2311,11 @@ public class Chat
                             }
                             uVars.strChar = params[1];
                             break;
-                        case "test":
-                            game.updateCharacterImage();
+                        case "updatecharacterimage":
+                            SwfToImageConverter.updateCharacterImage();
+                            break;
+                        case "updatemapimages":
+                            SwfToImageConverter.convertMapsToImages();
                             break;
                         default:
                             if (((unm == "iterator") || (game.world.myAvatar.isStaff())))

@@ -973,9 +973,13 @@ public class RequestHandler extends Object {
 
         game.world.mapLoadInProgress = true;
         game.world.strAreaName = o.areaName;
+		game.world.strMapMusic = o.hasOwnProperty("strMusic") ? o.music : null;
+        game.world.intMapMusicVolume = o.hasOwnProperty("intMusicVolume") ? o.intMusicVolume : 1;
         game.world.initObjExtra(o.sExtra);
         game.world.areaUsers = [];
         game.world.modID = -1;
+		game.world.bMapHasImage = o.bMapHasImage;
+		
         var myLeaf:Object = game.copyObj(game.world.uoTreeLeaf(game.net.myUserName));
 
         game.world.uoTree = {};
