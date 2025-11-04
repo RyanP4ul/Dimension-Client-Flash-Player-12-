@@ -9,7 +9,13 @@ import UI.Display.RankUpDisplay;
 
 import flash.display.MovieClip;
 import flash.events.Event;
+import flash.events.IOErrorEvent;
 import flash.filters.GlowFilter;
+import flash.net.URLRequest;
+import flash.system.ApplicationDomain;
+import flash.system.LoaderContext;
+
+import test_characters.CustomLoader;
 
 public class Avatar {
 
@@ -33,7 +39,8 @@ public class Avatar {
     public var tempitems:Array = [];
     public var bitData:Boolean = false;
     public var strFrame:String = "";
-    public var petMC:PetMC;
+//    public var petMC:PetMC;
+    public var companions:Object = null;
     public var sLinkPet:String = "";
     public var friendsLoaded:Boolean = false;
     public var strProj:String = "";
@@ -143,64 +150,113 @@ public class Avatar {
         }
     }
 
-    public function loadPet():void {
-        if (game.world.doLoadPet(this) && objData != null && objData.eqp != null && objData.eqp["pe"] != null && game.world.CHARS.contains(pMC)) {
-            if (petMC == null) {
-                petMC = new PetMC();
-                petMC.mouseEnabled = (petMC.mouseChildren = false);
-                petMC.WORLD = game.world;
-                petMC.pAV = this;
-            }
+    var context:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
 
-            game.onLoadMaster(onLoadPetComplete, game.world.loaderC, objData.eqp["pe"].sFile, null, this.onLoadPetError);
+
+    public function loadPet():void {
+		companions = {};
+	
+        if (game.world.doLoadPet(this) && objData != null && objData.hasOwnProperty("companions") && game.world.CHARS.contains(pMC))
+        {
+            for each (var o:Object in objData.companions)
+            {
+                var pet:PetMC = new PetMC();
+
+                pet.mouseEnabled = (pet.mouseChildren = false);
+                pet.WORLD = game.world;
+                pet.pAV = this;
+                pet.petId = int(o.id);
+                companions[o.id] = pet;
+
+//                game.onLoadMaster(onLoadPetComplete, game.world.loaderC, o.sFile, null, onLoadPetError);
+
+
+                var loader:CustomLoader = new CustomLoader();
+                loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoadPetComplete);
+                loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, onLoadPetError);
+                loader.customParent = pet;
+                loader.load(new URLRequest(game.getFilePath(o.sFile)), context);
+            }
         }
     }
 
     private function onLoadPetError(_arg_1:Event):void {
+		trace("onLoadPetError");
         unloadPet();
     }
 
-    public function onLoadPetComplete(_arg_1:Event):void {
-        var _local_2:Class;
+    public function onLoadPetComplete(e:Event):void {
+		trace("onLoadPetComplete");
+
+        var loader:CustomLoader = CustomLoader(e.target.loader);
+
+        var companionObj:Object = objData.companions[loader.customParent.petId];
+
+        if (!companionObj) return;
+
+        trace("onLoadPetComplete > 1");
+
         try {
-            _local_2 = (game.world.loaderD.getDefinition(objData.eqp["pe"].sLink) as Class);
-            petMC.removeChildAt(1);
-            petMC.mcChar = MovieClip(petMC.addChildAt(new (_local_2)(), 1));
-            petMC.mcChar.name = "mc";
+            trace("onLoadPetComplete > 2");
+
+            var assetClass:Class = (loader.contentLoaderInfo.applicationDomain.getDefinition(companionObj.sLink) as Class);
+            trace("onLoadPetComplete > " + companionObj.sLink);
+            loader.customParent.removeChildAt(1);
+            trace("onLoadPetComplete > 3");
+            loader.customParent.mcChar = MovieClip(loader.customParent.addChildAt(new (assetClass), 1));
+            trace("onLoadPetComplete > 4");
+            loader.customParent.mcChar.name = "mc";
+            trace("onLoadPetComplete > 5");
         } catch (e:Error) {
+            trace("Error loading pet asset class: " + e.message);
         }
+
         if (game.world.uoTree[objData.strUsername.toLowerCase()].strFrame == game.world.strFrame) {
-            if (((petMC.stage == null) && (petMC.getChildByName("defaultmc") == null))) {
-                MovieClip(game.world.CHARS.addChild(petMC)).name = ("pet_" + uid);
+            trace("onLoadPetComplete > 6");
+            if (loader.customParent.stage == null && (loader.customParent.getChildByName("defaultmc") == null)) {
+                trace("onLoadPetComplete > 6.1");
+                MovieClip(game.world.CHARS.addChild(loader.customParent)).name = ("pet_" + loader.customParent.petId);
             }
-            petMC.scale(pMC.mcChar.scaleY);
-            petMC.x = (pMC.x - 20);
-            petMC.y = (pMC.y + 5);
+
+            trace("onLoadPetComplete > 7");
+
+            loader.customParent.scale(pMC.mcChar.scaleY);
+            loader.customParent.x = (pMC.x - 20);
+            loader.customParent.y = (pMC.y + 5);
+            trace("onLoadPetComplete > 8");
         }
+
+        game.companionController.AddCompanion(companionObj);
 		
-		if (objData.eqp["pe"].sType == "BattlePet")
-		{
-			var avt:Avatar = game.world.getAvatarByUserName(objData.strUsername.toLowerCase());
-			if (avt.isMyAvatar) {
-				game.ui.mcPetPortrait.visible = true;
-				game.ui.btnTargetPetPortraitClose.visible = true;
-
-				avt.objData.eqp["pe"].sLink = this.objData.eqp["pe"].sLink;
-
-				// petMC.pAV.npcType = "pet";
-				game.ui.mcPetPortrait.pAV = petMC.pAV;
-				game.world.updatePetPortrait(petMC.pAV);
-			}
-		}
+//		if (objData.eqp["pe"].sType == "BattlePet")
+//		{
+//			var avt:Avatar = game.world.getAvatarByUserName(objData.strUsername.toLowerCase());
+//			if (avt.isMyAvatar) {
+//				game.ui.mcPetPortrait.visible = true;
+//				game.ui.btnTargetPetPortraitClose.visible = true;
+//
+//				avt.objData.eqp["pe"].sLink = this.objData.eqp["pe"].sLink;
+//
+//				// petMC.pAV.npcType = "pet";
+//				game.ui.mcPetPortrait.pAV = petMC.pAV;
+////				game.world.updatePetPortrait(petMC.pAV);
+//			}
+//		}
     }
 
     public function unloadPet():void {
-        if (petMC != null) {
+        for each (var petMC:PetMC in companions) {
             if (petMC.stage != null) {
                 game.world.CHARS.removeChild(petMC);
             }
-            petMC = null;
         }
+
+//        if (petMC != null) {
+//            if (petMC.stage != null) {
+//                game.world.CHARS.removeChild(petMC);
+//            }
+//            petMC = null;
+//        }
     }
 
     public function showMC():void {
@@ -226,21 +282,27 @@ public class Avatar {
     }
 
     public function showPetMC():void {
-        if (petMC == null) {
+        if (companions == null) {
             loadPet();
         } else {
-            if (((petMC.stage == null) && (petMC.getChildByName("defaultmc") == null))) {
-                game.world.CHARS.addChild(petMC);
-                petMC.scale(pMC.mcChar.scaleY);
-                petMC.x = (pMC.x - 20);
-                petMC.y = (pMC.y + 5);
+            for each (var pet:PetMC in companions) {
+                if (pet.stage == null && pet.getChildByName("defaultmc") == null) {
+                    game.world.CHARS.addChild(pet);
+                    pet.scale(pMC.mcChar.scaleY);
+                    pet.x = (pMC.x - 20);
+                    pet.y = (pMC.y + 5);
+                }
             }
         }
     }
 
     public function hidePetMC():void {
-        if (((!(petMC == null)) && (!(petMC.stage == null)))) {
-            game.world.CHARS.removeChild(petMC);
+        if (companions != null) {
+            for each (var pet:PetMC in companions) {
+                if (pet.stage != null) {
+                    game.world.CHARS.removeChild(pet);
+                }
+            }
         }
     }
 
@@ -1211,9 +1273,12 @@ public class Avatar {
 
         if (isPet)
         {
-            mc = petMC.parent.addChild(new sp_eh1());
-            mc.x = petMC.x;
-            mc.y = petMC.y;
+            for each (var petMC:PetMC in companions)
+            {
+                mc = petMC.parent.addChild(new sp_eh1());
+                mc.x = petMC.x;
+                mc.y = petMC.y;
+            }
         }
         else
         {
@@ -1315,6 +1380,11 @@ public class Avatar {
         }
 
         return game.world.bankinfo.isItemInBank(ItemID);
+    }
+
+    public function initCompanions(data:Object) : void {
+        objData.companions = data;
+        loadPet();
     }
 
     public function get FirstLoad():Boolean {

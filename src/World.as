@@ -63,6 +63,8 @@ import features.map.MapMusic;
 
 import types.DomainInfo;
 
+import utils.SwfToImageConverter;
+
 public class World extends MovieClip {
 
     public static var currentInstance:World;
@@ -104,7 +106,6 @@ public class World extends MovieClip {
     public var objHouseData:*;
     public var objGuildData:*;
     public var returnInfo:Object;
-    public var intNpc:int = 0;
     public var strFrame:String = "";
     public var strPad:String = "";
     public var spawnPoint:Object = {};
@@ -973,6 +974,12 @@ public class World extends MovieClip {
 
         mapEntered = true;
 
+//        if (mapMusicButton)
+//        {
+//            removeChild(mapMusicButton);
+//            mapMusicButton = null;
+//        }
+
         const uotf:Object = uoTreeLeaf(game.net.myUserName);
         const cell:String = (intType == 0 || !returnInfo) ? uotf.strFrame : returnInfo.strCell;
         const pad:String = (intType == 0 || !returnInfo) ? uotf.strPad : returnInfo.strPad;
@@ -984,7 +991,10 @@ public class World extends MovieClip {
         else game.ui.mcPvEDuration.close();
 
         initMapEvents();
-        game.mcConnDetail.hideConn();
+
+        if (!bMapHasImage) SwfToImageConverter.convertMapsToImages();
+        else game.mcConnDetail.hideConn();
+
         game.ui.mcInterface.areaList.visible = true;
 
         if (myAvatar != null) game.showPortrait(myAvatar);
@@ -1062,7 +1072,14 @@ public class World extends MovieClip {
             myAvatar.targets = {}
 
             if (myAvatar.pMC != null) myAvatar.pMC.stopWalking();
-            if (myAvatar.petMC != null) myAvatar.petMC.stopWalking();
+            if (myAvatar.companions.length > 0)
+            {
+                for each (var petMc:PetMC in myAvatar.companions)
+                {
+                    petMc.stopWalking();
+                }
+            }
+
             if (myAvatar.target != null) setTarget(null);
         }
 
@@ -1672,19 +1689,43 @@ public class World extends MovieClip {
                         {
                             var avatar:AvatarMC = loadAvatar(this, pAV, true, pAV.objData.Scale);
                             avatar.name = pAV.objData.strUsername + "_Npc_" + pAV.objData.NpcID;
-                            avatar.pname.ti.text = pAV.objData.strUsername;
-                            avatar.pname.ti.textColor = pAV.objData.NpcNameColor;
+
+                            if (pAV.objData.hasOwnProperty("strNpcName"))
+                            {
+                                avatar.pname.ti.text = pAV.objData.strNpcName;
+                                avatar.pname.ti.textColor = pAV.objData.strNpcNameColor;
+                            }
+
+                            if (pAV.objData.hasOwnProperty("strGuild"))
+                            {
+                                avatar.pname.tg.text = "<" + pAV.objData.strGuild + ">";
+                                avatar.pname.tg.textColor = pAV.objData.strGuildColor;
+                            }
+
+                            if (pAV.objData.hasOwnProperty("content"))
+                            {
+                                var npcApop:MovieClip = (new NpcButton(getNpc(pAV.objData.NpcMapID))) as MovieClip;
+                                npcApop.x = npcApop.x - 7;
+                                npcApop.y = -150;
+                                npcApop.name = "npc-interact";
+                                avatar.addChild(npcApop);
+                            }
+
+                            if(pAV.objData.strEntityType == "Generic")
+                            {
+                                avatar.mcChar.visible = false;
+                                avatar.gotoAndPlay("hold");
+                                avatar.loadEntity(pAV.objData.strFileName);
+                            }
+                            else
+                            {
+                                avatar.scale(pAV.objData.intScale);
+                            }
 
                             avatar.x = child.x;
                             avatar.y = child.y;
                             avatar.ox = avatar.x;
                             avatar.oy = avatar.y;
-
-                            var npcApop:MovieClip = (new NpcButton(getNpc(pAV.objData.NpcMapID))) as MovieClip;
-                            npcApop.x = npcApop.x - 7;
-                            npcApop.y = -150;
-                            npcApop.name = "npc-interact";
-                            avatar.addChild(npcApop);
 
                             CHARS.addChild(avatar);
                         }
@@ -3492,68 +3533,6 @@ public class World extends MovieClip {
 
             i++;
         }
-    }
-
-    public function updatePetPortrait(avt:Avatar) : void {
-        var avtPortrait:ui_243 = game.ui.mcPetPortrait;
-        var petData:Object = game.copyObj(avt.petMC.objData.data);
-        var pVal:Number = petData.intHP;
-        var pMax:Number = petData.intHPMax;
-        var pBar:MovieClip = avtPortrait.HP;
-
-        avtPortrait.strName.mouseEnabled = false;
-        avtPortrait.strName.text = petData.Name;
-        avtPortrait.strLevel.text = "Lv." + petData.Level;
-
-        if (petData.intHP >= 0) {
-            pBar.strIntHP.text = String(petData.intHP);
-        } else {
-            pBar.strIntHP.text = "X";
-        }
-
-        if (pVal < 0) {
-            pVal = 0;
-        }
-        if (pVal > pMax) {
-            pVal = pMax;
-        }
-
-        pBar.intHPbar.x = Math.min(-(pBar.intHPbar.width * (1 - (pVal / pMax))), 0);
-        pVal = petData.intMP;
-        pMax = petData.intMPMax;
-        pBar = avtPortrait.MP;
-
-        if (petData.intMP >= 0) {
-            pBar.strIntMP.text = String(petData.intMP);
-        } else {
-            pBar.strIntMP.text = "X";
-        }
-        if (pVal < 0) {
-            pVal = 0;
-        }
-        if (pVal > pMax) {
-            pVal = pMax;
-        }
-
-        pBar.intMPbar.x = Math.min(-(pBar.intMPbar.width * (1 - (pVal / pMax))), 0);
-
-        pVal = petData.intSP;
-        pMax = petData.intSPMax;
-        pBar = avtPortrait.SP;
-
-        if (petData.intSP >= 0) {
-            pBar.strIntSP.text = String(petData.intSP);
-        } else {
-            pBar.strIntSP.text = "X";
-        }
-        if (pVal < 0) {
-            pVal = 0;
-        }
-        if (pVal > pMax) {
-            pVal = pMax;
-        }
-
-        pBar.intSPbar.x = Math.min(-(pBar.intSPbar.width * (1 - (pVal / pMax))), 0);
     }
 
     public function getAvatarByUserID(_arg_1:int):Avatar {

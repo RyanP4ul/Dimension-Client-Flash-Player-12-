@@ -7,6 +7,8 @@ package UI.LPF.Layout
 {
 import UI.LPF.Panel.LPFPanelBank;
 
+import features.bank.BankPreview;
+
 import flash.display.MovieClip;
     import flash.text.*;
 

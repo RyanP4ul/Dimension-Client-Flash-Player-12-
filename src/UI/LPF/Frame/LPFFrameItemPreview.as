@@ -35,6 +35,8 @@ import flash.text.TextField;
     import flash.text.*;
 import flash.utils.getDefinitionByName;
 
+import utils.SwfToImageConverter;
+
 public class LPFFrameItemPreview extends LPFFrame
     {
 
@@ -46,16 +48,21 @@ public class LPFFrameItemPreview extends LPFFrame
         public var btnFav:SimpleButton;
         public var btnMGender:SimpleButton;
         public var btnFGender:SimpleButton;
+        public var btnConvertToImage:SimpleButton;
+
+
         public var iSel:Object;
         private var previewArgs:Object = {};
         public var game:Game;
         public var curItem:Object;
+
         private var sLinkArmor:String = "";
         private var sLinkCape:String = "";
         private var sLinkHelm:String = "";
         private var sLinkPet:String = "";
         private var sLinkWeapon:String = "";
         private var sLinkHouse:String = "";
+
         private var pLoaderD:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
         private var pLoaderC:LoaderContext = new LoaderContext(false, pLoaderD);
         private var loaderStack:Array = [];
@@ -73,12 +80,14 @@ public class LPFFrameItemPreview extends LPFFrame
             pLoaderC.checkPolicyFile = false;
             pLoaderC.allowCodeImport = true;
 
+            btnConvertToImage.visible = false;
             btnFGender.visible = false;
             btnMGender.visible = false;
             mcUpgrade.visible = false;
 
-            btnDelete.addEventListener(MouseEvent.CLICK, onBtnDeleteClick, false, 0, true);
-            btnDelete.addEventListener(MouseEvent.CLICK, onBtnDeleteClick, false, 0, true);
+            btnConvertToImage.addEventListener(MouseEvent.CLICK, onBtnConvertToImageClick, false, 0, true);
+            btnConvertToImage.addEventListener(MouseEvent.MOUSE_OVER, onConvertToImageTTOver, false, 0, true);
+            btnConvertToImage.addEventListener(MouseEvent.MOUSE_OUT, onConvertToImageTTOut, false, 0, true);
 
             btnDelete.addEventListener(MouseEvent.CLICK, onBtnDeleteClick, false, 0, true);
             btnDelete.addEventListener(MouseEvent.MOUSE_OVER, onDeleteTTOver, false, 0, true);
@@ -125,6 +134,10 @@ public class LPFFrameItemPreview extends LPFFrame
 
         override public function fClose():void
         {
+            btnConvertToImage.removeEventListener(MouseEvent.CLICK, onBtnConvertToImageClick);
+            btnConvertToImage.removeEventListener(MouseEvent.MOUSE_OVER, onConvertToImageTTOver);
+            btnConvertToImage.removeEventListener(MouseEvent.MOUSE_OUT, onConvertToImageTTOut);
+
             btnDelete.removeEventListener(MouseEvent.CLICK, onBtnDeleteClick);
             btnDelete.removeEventListener(MouseEvent.MOUSE_OVER, onDeleteTTOver);
             btnDelete.removeEventListener(MouseEvent.MOUSE_OUT, onDeleteTTOut);
@@ -159,6 +172,7 @@ public class LPFFrameItemPreview extends LPFFrame
         {
             btnFav.visible = false;
             btnDelete.visible = false;
+            btnConvertToImage.visible = game.world.myAvatar.isStaff();
 
             var _local_4:Object = iSel;
 
@@ -171,6 +185,8 @@ public class LPFFrameItemPreview extends LPFFrame
                 _local_4 = game.world.myAvatar.getEquippedItemBySlot("pe");
                 iSel = game.world.myAvatar.getEquippedItemBySlot("pe");
             }
+
+
 
             if (_local_4 != null)
             {
@@ -377,6 +393,12 @@ public class LPFFrameItemPreview extends LPFFrame
                 game.ui.ModalStack.addChild(_local_2);
                 _local_2.init(_local_3);
             }
+        }
+
+        private function onBtnConvertToImageClick(event:Event) : void {
+            game.mixer.playSound("Click");
+
+            SwfToImageConverter.convertItemToImage(iSel.ItemID, iSel.sName, iSel.sES, mcPreview);
         }
 
         public function onBtnChatShowClick(event:Event): void
@@ -813,6 +835,16 @@ public class LPFFrameItemPreview extends LPFFrame
         }
 
         public function onDeleteTTOut(_arg_1:MouseEvent):void
+        {
+            game.ui.ToolTip.close();
+        }
+
+        public function onConvertToImageTTOver(_arg_1:MouseEvent):void
+        {
+            game.ui.ToolTip.openWith({"str":"Convert swf to image"});
+        }
+
+        public function onConvertToImageTTOut(_arg_1:MouseEvent):void
         {
             game.ui.ToolTip.close();
         }

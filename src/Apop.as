@@ -293,7 +293,6 @@ public class Apop extends MovieClip
             _local_1.stop();
             this.mc.btnClose.removeEventListener(MouseEvent.CLICK, this.xClick);
             this.mc.parent.removeChild(this);
-            world.intNpc = 0;
         }
 
         private function xClick(_arg_1:MouseEvent):void

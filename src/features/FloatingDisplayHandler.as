@@ -32,63 +32,63 @@ public class FloatingDisplayHandler extends MovieClip
             case "MISS":
                 fmt.color = 0xAAAAAA;
                 tf.text = "MISS";
-                glow = new GlowFilter(0x000000, 1, 4, 4, 2);
+                glow = new GlowFilter(0x000000, 1, 4, 4, 1);
                 break;
             case "CRIT":
                 fmt.color = 0xFF0000;
                 fmt.size = 28;
                 tf.text = value + "!";
-                glow = new GlowFilter(0xFF6600, 1, 8, 8, 3);
+                glow = new GlowFilter(0xFF6600, 1, 8, 8, 1);
                 break;
             case "HIT":
                 fmt.color = 0xFFFFFF;
                 tf.text = int(value) > 0 ? value : String(Math.abs(Number(value)));
-                glow = new GlowFilter(0x000000, 1, 4, 4, 2);
+                glow = new GlowFilter(0x000000, 1, 4, 4, 1);
                 break;
             case "HEAL":
                 fmt.color = 0xFFFFFF;
                 tf.text = "+" + value;
-                glow = new GlowFilter(0xA6FF4D, 1, 4, 4, 2);
+                glow = new GlowFilter(0xA6FF4D, 1, 4, 4, 1);
                 break;
             case "COPPER":
                 fmt.color = 0xCC6600;
                 tf.text = "+" + value + " Copper";
-                glow = new GlowFilter(0x663300, 1, 5, 5, 2);
+                glow = new GlowFilter(0x663300, 1, 5, 5, 1);
                 break;
             case "SILVER":
                 fmt.color = 0xCCCCCC;
                 tf.text = "+" + value + " Silver";
-                glow = new GlowFilter(0x999999, 1, 6, 6, 2);
+                glow = new GlowFilter(0x999999, 1, 6, 6, 1);
                 break;
             case "GOLD":
                 fmt.color = 0xFFD700;
                 tf.text = "+" + value + " Gold";
-                glow = new GlowFilter(0xFFAA00, 1, 8, 8, 3);
+                glow = new GlowFilter(0xFFAA00, 1, 8, 8, 1);
                 break;
             case "EXP":
                 fmt.color = 0x00CCFF;
                 tf.text = "+" + value + " EXP";
-                glow = new GlowFilter(0x003366, 1, 6, 6, 3);
+                glow = new GlowFilter(0x003366, 1, 6, 6, 1);
                 break;
             case "BLEED":
                 fmt.color = 0xFF4C4C;
                 tf.text = value;
-                glow = new GlowFilter(0x003366, 1, 6, 6, 3);
+                glow = new GlowFilter(0x003366, 1, 6, 6, 1);
                 break;
             case "TOXIC":
                 fmt.color = 0xFF4C4C;
                 tf.text = value;
-                glow = new GlowFilter(0x66FF66, 1, 6, 6, 3);
+                glow = new GlowFilter(0x66FF66, 1, 6, 6, 1);
                 break;
             case "DOT":
                 fmt.color = 0xFF4C4C;
                 tf.text = value;
-                glow = new GlowFilter(0x003366, 1, 6, 6, 3);
+                glow = new GlowFilter(0x003366, 1, 6, 6, 1);
                 break;
             default:
                 fmt.color = 0xFFFFFF;
                 tf.text = value;
-                glow = new GlowFilter(0x000000, 1, 4, 4, 2);
+                glow = new GlowFilter(0x000000, 1, 4, 4, 1);
                 break;
         }
 

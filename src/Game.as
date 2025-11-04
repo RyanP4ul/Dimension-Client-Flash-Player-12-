@@ -9,6 +9,7 @@ import UI.uProto;
 import com.adobe.images.PNGEncoder;
 
 import features.FloatingDisplayHandler;
+import features.companion.CompanionController;
 
 import fl.motion.Color;
 
@@ -142,6 +143,7 @@ public class Game extends MovieClip {
     public var floorReward:FloorReward;
 
     public var floatingDisplay:FloatingDisplayHandler;
+    public var companionController:CompanionController;
 
     {
         MovieClip.prototype.removeAllChildren = function ():void
@@ -161,6 +163,7 @@ public class Game extends MovieClip {
         cache = new Cache();
         statsController = new StatController(this);
         floatingDisplay = new FloatingDisplayHandler();
+        companionController = new CompanionController();
 
         _characters = [];
 
@@ -681,31 +684,28 @@ public class Game extends MovieClip {
 
         prop = "";
 
-        for (prop in updated) {
-            val = updated[prop];
-            if (avt != null && avt.petMC != null) {
-                if (prop.toLowerCase().indexOf("inthp") > -1 || prop.toLowerCase().indexOf("intmp") > -1 || prop.toLowerCase().indexOf("intsp") > -1) {
-                    val = int(val);
-                    if (avt.petMC.objData.data != null) {
-                        avt.petMC.objData.data[prop] = val;
-                    }
+        trace("userPetTreeWrite > DATA > " + JSON.stringify(uoLeafO));
 
-                    if (val <= 0 && avt.petMC != null)
-                    {
-                        avt.petMC.stopWalking();
-//                        world.removeAuraFX(avt.petMC, "all");
-                        // Mon.pMC.die();
-//                        trace("==================");
-//                        trace("PIE DIE!");
-//                        trace("==================");
-                    }
-
-                    if (((avt.isMyAvatar) || (world.myAvatar.target == avt))) {
-                        world.updatePetPortrait(avt);
-                    }
-                }
-            }
-        }
+//        for (prop in updated) {
+//            val = updated[prop];
+//            if (avt != null && avt.petMC != null) {
+//                if (prop.toLowerCase().indexOf("inthp") > -1 || prop.toLowerCase().indexOf("intmp") > -1 || prop.toLowerCase().indexOf("intsp") > -1) {
+//                    val = int(val);
+//                    if (avt.petMC.objData.data != null) {
+//                        avt.petMC.objData.data[prop] = val;
+//                    }
+//
+//                    if (val <= 0 && avt.petMC != null)
+//                    {
+//                        avt.petMC.stopWalking();
+//                    }
+//
+//                    if (((avt.isMyAvatar) || (world.myAvatar.target == avt))) {
+////                        world.updatePetPortrait(avt);
+//                    }
+//                }
+//            }
+//        }
     }
 
     public function npcTreeWrite(NpcMapID:int, npcLeafO:Object, targets:* = null):void
@@ -845,18 +845,25 @@ public class Game extends MovieClip {
         var yBuffer:* = undefined;
         var animString:String;
         var i:int;
+
         var cTyp:String = "";
         var cID:int = -1;
+        var cPid: int = -1;
+
         var tTyp:String = "";
         var tID:int = -1;
+        var tPid: int = -1;
+
         var tAvts:Array = [];
         var tInfA:Array = [];
         var strF:String = "";
         var cReg:Point = new Point(0, 0);
         var tReg:Point = new Point(0, 0);
 
-        cTyp = String(anim.cInf.split(":")[0]);
-        cID = int(anim.cInf.split(":")[1]);
+        var splitAnimCurrentInf:Array = anim.cInf.split(":");
+        cTyp = String(splitAnimCurrentInf[0]);
+        cID = int(splitAnimCurrentInf[1]);
+        cPid = splitAnimCurrentInf.length == 3 ? splitAnimCurrentInf[2] : -1;
 
         switch (cTyp) {
             case "t":
@@ -889,8 +896,10 @@ public class Game extends MovieClip {
         tInfA = anim.tInf.split(",");
         i = 0;
         while (i < tInfA.length) {
-            tTyp = String(tInfA[i].split(":")[0]);
-            tID = int(tInfA[i].split(":")[1]);
+            var splitAnimTgtInf:Array = tInfA[i].split(":");
+            tTyp = String(splitAnimTgtInf[0]);
+            tID = int(splitAnimTgtInf[1]);
+            tPid = splitAnimTgtInf.length == 3 ? splitAnimCurrentInf[2] : -1;
             switch (tTyp) {
                 case "t":
                 case "p":
@@ -922,7 +931,6 @@ public class Game extends MovieClip {
         if (!cAvt.hasOwnProperty("lastAnimTime")) cAvt.lastAnimTime = 0;
 
         if (getTimer() - cAvt.lastAnimTime < 300) return;
-
 
         cAvt.lastAnimTime = getTimer();
 
@@ -966,7 +974,7 @@ public class Game extends MovieClip {
                     if (cAvt != world.myAvatar) cAvt.target = tAvt;
 
                     cReg = cAvt.pMC.mcChar.localToGlobal(new Point(0, 0));
-                    tReg = tTyp == "t" ? tAvt.petMC.localToGlobal(new Point(0, 0)) : tAvt.pMC.mcChar.localToGlobal(new Point(0, 0)); // isT ? tAvt.petMC.localToGlobal(new Point(0, 0)) : tAvt.pMC.mcChar.localToGlobal(new Point(0, 0));
+                    tReg = tTyp == "t" ? tAvt.companions[tPid].localToGlobal(new Point(0, 0)) : tAvt.pMC.mcChar.localToGlobal(new Point(0, 0)); // isT ? tAvt.petMC.localToGlobal(new Point(0, 0)) : tAvt.pMC.mcChar.localToGlobal(new Point(0, 0));
                     cReg = world.CHARS.globalToLocal(cReg);
                     tReg = world.CHARS.globalToLocal(tReg);
 
@@ -988,7 +996,7 @@ public class Game extends MovieClip {
                     return;
                 case "t":
                     if (cAvt != world.myAvatar) cAvt.target = tAvt;
-                    cReg = cAvt.petMC.localToGlobal(new Point(0, 0));
+                    cReg = cAvt.companions[cPid].localToGlobal(new Point(0, 0));
                     tReg = tAvt.pMC.mcChar.localToGlobal(new Point(0, 0));
                     cReg = world.CHARS.globalToLocal(cReg);
                     tReg = world.CHARS.globalToLocal(tReg);
@@ -999,19 +1007,19 @@ public class Game extends MovieClip {
                         if ((tReg.x + xBuffer < 0) || (tReg.x + xBuffer > ConfigurationData.CLIENT_WIDTH)) xBuffer *= -1;
                         buffer = int(((Math.random() * 30) - 15));
                         yBuffer = (((tReg.y - cReg.y) >= 0) ? -(buffer) : buffer) * world.SCALE;
-                        cAvt.petMC.walkTo(tReg.x + xBuffer, tReg.y + yBuffer, 32);
+                        cAvt.companions[cPid].walkTo(tReg.x + xBuffer, tReg.y + yBuffer, 32);
                     }
 
-                    if (cAvt != tAvt) cAvt.petMC.turn((tAvt.pMC.x - cAvt.petMC.x) >= 0 ? "right" : "left");
-                    if (anim.strl) cAvt.petMC.spFX.strl = anim.strl;
-                    if (anim.fx) cAvt.petMC.spFX.fx = anim.fx;
-                    if (tAvts) cAvt.petMC.spFX.avts = tAvts;
-                    if (cAvt.petMC.mcChar.currentLabel != animStr) cAvt.petMC.mcChar.gotoAndPlay(animStr);
+                    if (cAvt != tAvt) cAvt.companions[cPid].turn((tAvt.pMC.x - cAvt.companions[cPid].x) >= 0 ? "right" : "left");
+                    if (anim.strl) cAvt.companions[cPid].spFX.strl = anim.strl;
+                    if (anim.fx) cAvt.companions[cPid].spFX.fx = anim.fx;
+                    if (tAvts) cAvt.companions[cPid].spFX.avts = tAvts;
+                    if (cAvt.companions[cPid].mcChar.currentLabel != animStr) cAvt.companions[cPid].mcChar.gotoAndPlay(animStr);
                     return;
                 case "n":
                     if (cAvt != world.myAvatar) cAvt.target = tAvt;
                     cReg = cAvt.pMC.mcChar.localToGlobal(new Point(0, 0));
-                    tReg = (tTyp == "t") ? tAvt.petMC.localToGlobal(new Point(0, 0)) : tAvt.pMC.mcChar.localToGlobal(new Point(0, 0));
+                    tReg = (tTyp == "t") ? tAvt.companions[tPid].localToGlobal(new Point(0, 0)) : tAvt.pMC.mcChar.localToGlobal(new Point(0, 0));
                     cReg = world.CHARS.globalToLocal(cReg);
                     tReg = world.CHARS.globalToLocal(tReg);
 
@@ -2713,8 +2721,6 @@ public class Game extends MovieClip {
         ui.mcInterface.cacheAsBitmap = true;
         ui.dropStack.cacheAsBitmap = true;
 
-        ui.mcPetPortrait.visible = false;
-        ui.btnTargetPetPortraitClose.visible = false;
         ui.mcFPS.visible = preference.data.bFps;
         ui.mcFPS.mouseEnabled = false;
         ui.mcFPS.mouseChildren = false;
@@ -2731,8 +2737,6 @@ public class Game extends MovieClip {
         stage.removeEventListener(KeyboardEvent.KEY_DOWN, key_StageGame);
         ui.mcInterface.mcXPBar.removeEventListener(MouseEvent.MOUSE_OVER, xpBarMouseOver);
         ui.mcInterface.mcXPBar.removeEventListener(MouseEvent.MOUSE_OUT, xpBarMouseOut);
-        ui.mcPetPortrait.removeEventListener(MouseEvent.CLICK, portraitClick);
-        ui.btnTargetPetPortraitClose.removeEventListener(MouseEvent.CLICK, onPetPortraitCloseClick);
         ui.mcPortraitTarget.removeEventListener(MouseEvent.CLICK, portraitClick);
         ui.mcPortrait.removeEventListener(MouseEvent.CLICK, portraitClick);
         ui.btnTargetPortraitClose.removeEventListener(MouseEvent.CLICK, onTargetPortraitCloseClick);
@@ -2742,8 +2746,6 @@ public class Game extends MovieClip {
         ui.mcInterface.mcXPBar.strXP.visible = false;
         ui.mcInterface.mcXPBar.addEventListener(MouseEvent.MOUSE_OVER, xpBarMouseOver);
         ui.mcInterface.mcXPBar.addEventListener(MouseEvent.MOUSE_OUT, xpBarMouseOut);
-        ui.mcPetPortrait.addEventListener(MouseEvent.CLICK, portraitClick);
-        ui.btnTargetPetPortraitClose.addEventListener(MouseEvent.CLICK, onPetPortraitCloseClick);
         ui.mcPortraitTarget.addEventListener(MouseEvent.CLICK, portraitClick);
         ui.mcPortrait.addEventListener(MouseEvent.CLICK, portraitClick);
         ui.btnTargetPortraitClose.addEventListener(MouseEvent.CLICK, onTargetPortraitCloseClick);
@@ -3180,30 +3182,6 @@ public class Game extends MovieClip {
         mcPortraitBox.visible = true;
     }
 
-    public function showPetPortrait(avt:Avatar, mcPortraitBox:MovieClip):void {
-        var mc:MovieClip = mcPortraitBox.mcHead as MovieClip;
-        var child:DisplayObject;
-        child = mc.head.getChildByName("face");
-        if (child != null) {
-            mc.head.removeChild(child);
-        }
-
-        var petClass:Class = world.loaderD.getDefinition(avt.objData.eqp["pe"].sLink) as Class;
-        var pet:DisplayObject = new petClass();
-        var scaleFactor:Number = 130 / ((pet.getBounds(mcPortraitBox.Circle) as Rectangle).height);
-
-        pet.scaleX = scaleFactor;
-        pet.scaleY = scaleFactor;
-
-        pet.x = (mc.head.width - pet.width) / 2 - pet.getBounds(pet).x * scaleFactor - 70;
-        pet.y = (mc.head.height - pet.height) / 2 - pet.getBounds(pet).y * scaleFactor - 50;
-
-        mc.head.addChildAt(pet, 0).name = "face";
-        mc.head.hair.visible = false;
-        mc.head.helm.visible = false;
-        mc.backhair.visible = false;
-    }
-
     public function oniconQuestClick(event:MouseEvent):void {
         ui.mcQuestTracker.toggle();
     }
@@ -3392,11 +3370,6 @@ public class Game extends MovieClip {
 
     private function onTargetPortraitCloseClick(_arg_1:MouseEvent):void {
         world.cancelTarget();
-    }
-
-    private function onPetPortraitCloseClick(evt:MouseEvent):void {
-        ui.mcPetPortrait.visible = false;
-        ui.btnTargetPetPortraitClose.visible = false;
     }
 
     public function showMap():void {

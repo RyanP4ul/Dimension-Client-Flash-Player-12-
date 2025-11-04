@@ -32,14 +32,13 @@ public class NpcContent extends MovieClip {
     }
 
     private function initInterface():void {
-        trace(JSON.stringify(content));
         txtName.text = npcName;
         txtCat.text = content.Category;
         txtDesc.text = content.Description;
 
         if (content.Entry == "Left") {
-            bg.x = 715.9;
-            scr.x = 885.4;
+            bg.x = 1000;
+            scr.x = 1200;
         } else {
             bg.x = 65.8;
             scr.x = 235.3;

@@ -15,32 +15,36 @@ public class NpcButton extends MovieClip {
         this.pAV = pAv;
 
         interact.addEventListener(MouseEvent.CLICK, function (event:MouseEvent):void {
-            initInteract(game.world.intNpc);
+            initInteract("Main");
         });
     }
 
-    public function initInteract(intNpc:int):void {
-        game.world.intNpc = intNpc;
+    public function initInteract(label:String):void {
+        var npcLinkage:MovieClip;
 
-        trace("NPC INDEX => " + intNpc);
+        if (pAV.objData.strEntityType == "Generic") {
+            var AssetClass:Class = game.world.getClass(pAV.objData.strLinkage);
+            npcLinkage = new (AssetClass)();
+            npcLinkage.scaleX = npcLinkage.scaleY = 4;
+            npcLinkage.x = -60;
+            npcLinkage.y = (npcLinkage.height / 2) + 60;
+        } else {
+            var avatar:AvatarMC = game.world.loadAvatar(game.world, pAV, true, 5); // "npc-" + pAV.objData.NpcID in game.cache.apop ? game.cache.apop[pAV.objData.NpcID] as AvatarMC : game.world.loadAvatar(game.world, pAV, true, 5);
+            avatar.pname.visible = false;
+            avatar.mcChar.x = -60;
+            avatar.mcChar.y = 450;
+            npcLinkage = avatar.mcChar;
+        }
 
-        var avatar:AvatarMC = game.world.loadAvatar(game.world, pAV, true, 5); // "npc-" + pAV.objData.NpcID in game.cache.apop ? game.cache.apop[pAV.objData.NpcID] as AvatarMC : game.world.loadAvatar(game.world, pAV, true, 5);
+        trace(">>> initInterface = " + label);
 
-        avatar.pname.visible = false;
-        avatar.mcChar.x = -60;
-        avatar.mcChar.y = 450;
-
-//        if (!(game.cache.apop[pAV.objData.NpcID])) {
-//            game.cache.apop[pAV.objData.NpcID] = avatar;
-//        }
-
-        trace("INIT INTERACT => " + JSON.stringify(pAV.objData));
-
-        content = pAV.objData.content[game.world.intNpc];
-        var npcContent:NpcContent = new NpcContent(this, pAV.objData.strUsername);
+        content = pAV.objData.content[label];
+        
+        trace(">>> " + JSON.stringify(content));
+        var npcContent:NpcContent = new NpcContent(this, pAV.objData.strNpcName);
 
         game.world.openApop({
-            npcLinkage: avatar.mcChar,
+            npcLinkage: npcLinkage,
             cnt: npcContent,
             npcEntry: String(content.Entry).toLowerCase(),
             scene: String(content.Scene).toLowerCase(),

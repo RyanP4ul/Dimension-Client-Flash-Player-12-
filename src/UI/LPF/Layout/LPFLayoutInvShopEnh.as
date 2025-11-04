@@ -733,7 +733,7 @@ public class LPFLayoutInvShopEnh extends LPFLayout
 								var es:String = iSel.sES;
 								
 								var hasValidLink:Boolean = (link != "" && link != " " && link != "none");
-								var isItemOrPet:Boolean = (type == "pet") || (type == "potion" && hasValidLink);
+								var isItemOrPet:Boolean = (type == "pet") || (type == "battlepet") || (type == "potion" && hasValidLink);
 								var isEquippedSlot:Boolean = (es == "co" || es == "am");
 								
                                 if (isItemOrPet || isEquippedSlot)

@@ -1056,6 +1056,39 @@ public class AvatarMC extends MovieClip {
         }
     }
 
+    public function loadEntity(sFile:String) : void
+    {
+        this.world.queueLoad({
+            "strFile":(this.world.game.getFilePath(sFile)),
+            "callBackA":world.game.onLoadToBytes(onLoadEntity, world.loaderC),
+            "avt":this.pAV
+        });
+    }
+
+    public function onLoadEntity(_arg_1:Event):void
+    {
+        var AssetClass:Class = (world.getClass(pAV.objData.strLinkage) as Class);
+        try {
+            var mc:MovieClip = new (AssetClass)();
+            mc.name = "Entity";
+            mc.scaleX = scaleY = pAV.objData.intScale;
+
+            pname.y = mc.y - mc.height - pname.ti.textHeight - 5;
+
+            var npcInteract:MovieClip = getChildByName("npc-interact") as MovieClip;
+
+            if (npcInteract != null) {
+                npcInteract.y = pname.y - npcInteract.height;
+            }
+
+            mcChar.visible = false;
+            gotoAndPlay("in1");
+
+            addChild(mc);
+        } catch(e:Error) {
+        }
+    }
+
     public function setHelmVisibility(_arg_1:Boolean):void {
         if (ConfigurationData.Debug)
         {
@@ -1218,52 +1251,50 @@ public class AvatarMC extends MovieClip {
             return;
         }
 
-        if (s.indexOf("Pet") > -1) {
-            pItem = pAV.getItemByEquipSlot("pe");
-            if (s.indexOf(":") > -1) {
-                petSplit = s.split(":");
-                s = petSplit[0];
-                try {
-                    if (pItem != null) {
-                        if (petSplit[1] == "PetAttack") {
-                            p = ["Attack1", "Attack2"][Math.round((Math.random() * 1))];
-                            if (pAV.petMC.mcChar.currentLabel == "Idle") {
-                                pAV.petMC.mcChar.gotoAndPlay(p);
-                            }
-                        } else {
-                            p = petSplit[1].slice(3);
-                            if (pAV.petMC.mcChar.currentLabel == "Idle") {
-                                pAV.petMC.mcChar.gotoAndPlay(p);
-                            }
-                        }
-                    }
-                } catch (e) {
-                }
-            } else {
-                if (pItem != null) {
-                    try {
-                        p = ["Attack1", "Attack2"][Math.round((Math.random() * 1))];
-                        if (pAV.petMC.mcChar.currentLabel == "Idle") {
-                            pAV.petMC.mcChar.gotoAndPlay(p);
-                        }
-                        return;
-                    } catch (e) {
-                        s = ["Attack1", "Attack2"][Math.round((Math.random() * 1))];
-                    }
-                } else {
-                    s = ((s.indexOf("1") > -1) ? "Attack1" : "Attack2");
-                }
-            }
-        }
+        // ITS SEEMS USELESS FOR PET ANIMATIONS
+
+//        if (s.indexOf("Pet") > -1) {
+//            pItem = pAV.getItemByEquipSlot("pe");
+//            if (s.indexOf(":") > -1) {
+//                petSplit = s.split(":");
+//                s = petSplit[0];
+//                try {
+//                    if (pItem != null) {
+//                        if (petSplit[1] == "PetAttack") {
+//                            p = ["Attack1", "Attack2"][Math.round((Math.random() * 1))];
+//                            if (pAV.petMC.mcChar.currentLabel == "Idle") {
+//                                pAV.petMC.mcChar.gotoAndPlay(p);
+//                            }
+//                        } else {
+//                            p = petSplit[1].slice(3);
+//                            if (pAV.petMC.mcChar.currentLabel == "Idle") {
+//                                pAV.petMC.mcChar.gotoAndPlay(p);
+//                            }
+//                        }
+//                    }
+//                } catch (e) {
+//                }
+//            } else {
+//                if (pItem != null) {
+//                    try {
+//                        p = ["Attack1", "Attack2"][Math.round((Math.random() * 1))];
+//                        if (pAV.petMC.mcChar.currentLabel == "Idle") {
+//                            pAV.petMC.mcChar.gotoAndPlay(p);
+//                        }
+//                        return;
+//                    } catch (e) {
+//                        s = ["Attack1", "Attack2"][Math.round((Math.random() * 1))];
+//                    }
+//                } else {
+//                    s = ((s.indexOf("1") > -1) ? "Attack1" : "Attack2");
+//                }
+//            }
+//        }
 
         if (((s == "Attack1") || (s == "Attack2"))) {
             wItem = pAV.getItemByEquipSlot("Weapon");
             if (((!(wItem == null)) && (!(wItem.sType == null)))) {
                 sType = wItem.sType;
-
-//                trace("queueAnim > " + s + " TYPE > " + sType);
-//                trace(JSON.stringify(wItem));
-
                 switch (sType) {
                     case "Unarmed":
                         s = ["UnarmedAttack1", "UnarmedAttack2", "KickAttack", "FlipAttack"][Math.round((Math.random() * 3))];
@@ -1359,9 +1390,17 @@ public class AvatarMC extends MovieClip {
             isOK = false;
         }
         if (isOK) {
-            if (pAV.petMC != null && pAV.petMC.mcChar != null) {
-                pAV.petMC.walkTo((toX - 20), (toY + 5), (walkSpeed - 3));
+            if (pAV.companions != null)
+            {
+                for each (var petMc:PetMC in pAV.companions)
+                {
+                    if (petMc != null && petMc.mcChar != null)
+                    {
+                        petMc.walkTo((toX - 20), (toY + 5), (walkSpeed - 3));
+                    }
+                }
             }
+
             op = new Point(this.x, this.y);
             tp = new Point(toX, toY);
             this.walkSpeed = walkSpeed;

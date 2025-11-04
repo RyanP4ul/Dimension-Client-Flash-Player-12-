@@ -23,6 +23,8 @@ import abstracts.AbstractLoader;
 
 import org.sepy.ColorPicker.ColorPicker2;
 
+import test_characters.Carousel;
+
 public class CharacterCreate extends AbstractLoader {
 
     private const game:Game = Game.root;
@@ -58,6 +60,7 @@ public class CharacterCreate extends AbstractLoader {
     public var loadedCount:int = 0;
 
     public var mcGender:GenderMC = new GenderMC();
+    public var carousel:Carousel;
 
     public var applicationDomain:ApplicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
     public var context:LoaderContext = new LoaderContext(false, applicationDomain);
@@ -81,11 +84,13 @@ public class CharacterCreate extends AbstractLoader {
             "intColorAccessory": 0,
             "eqp": {
                 "Weapon": {
+					"ItemID": 1,
                     "sFile": "items/swords/sword01.swf",
                     "sType": "Weapon",
                     "sLink": "sword01"
                 },
                 "ar": {
+					"ItemID": 2,
                     "sFile": "NewWarriorB2.swf",
                     "sLink": "NewWarriorB2"
                 }
@@ -106,11 +111,13 @@ public class CharacterCreate extends AbstractLoader {
             "intColorAccessory": 0,
             "eqp": {
                 "Weapon": {
+					"ItemID": 7,
                     "sFile": "items/staves/staff01.swf",
                     "sType": "Weapon",
                     "sLink": ""
                 },
                 "ar": {
+					"ItemID": 3,
                     "sFile": "BaseMageRedesign3R2.swf",
                     "sLink": "BaseMageRedesign3"
                 }
@@ -131,12 +138,13 @@ public class CharacterCreate extends AbstractLoader {
             "intColorAccessory": 0,
             "eqp": {
                 "Weapon": {
-                    "ItemID": 1,
+                    "ItemID": 8,
                     "sFile": "items/daggers/dagger01.swf",
                     "sType": "Weapon",
                     "sLink": ""
                 },
                 "ar": {
+					"ItemID": 4,
                     "sFile": "BaseRogue2xx.swf",
                     "sLink": "Rogue2"
                 }
@@ -157,11 +165,13 @@ public class CharacterCreate extends AbstractLoader {
             "intColorAccessory": 0,
             "eqp": {
                 "Weapon": {
+					"ItemID": 7,
                     "sFile": "items/staves/staff01.swf",
                     "sType": "Weapon",
                     "sLink": ""
                 },
                 "ar": {
+					"ItemID": 5,
                     "sFile": "NewHealerR2.swf",
                     "sLink": "NewHealerB2"
                 }
@@ -185,8 +195,8 @@ public class CharacterCreate extends AbstractLoader {
         _skills.y = 610;
         addChild(_skills);
 
-        mcGender.x = 460;
-        mcGender.y = 264.5;
+        mcGender.x = 560;
+        mcGender.y = 310.55;
         mcGender.gotoAndStop("Male");
         addChildAt(mcGender, 3);
 
@@ -219,6 +229,7 @@ public class CharacterCreate extends AbstractLoader {
         initEvent();
         initCustomize();
         fetchHairs();
+        initAnnouncements();
     }
 
     private function initEvent():void {
@@ -308,13 +319,19 @@ public class CharacterCreate extends AbstractLoader {
         var avatar:AvatarMC = avatarCache in game.cache.create ? game.cache.create[avatarCache] as AvatarMC : world.loadAvatar(world, _pAV, true);
 
         avatar.name = "avt-" + avatars.indexOf(obj);
-        avatar.scale(avatars.indexOf(obj) == 0 ? 2.3 : 1.5);
-        avatar.x = avatars.indexOf(obj) == 0 ? 350 : (avatars.indexOf(obj) == 1) ? 500 : 200;
-        avatar.y = avatars.indexOf(obj) == 0 ? 450 : 400;
+        avatar.scale(avatars.indexOf(obj) == 0 ? 2.6 : 1.8);
+        avatar.x = avatars.indexOf(obj) == 0 ? 450 : (avatars.indexOf(obj) == 1) ? 650 : 250;
+        avatar.y = avatars.indexOf(obj) == 0 ? 520 : 470;
+
         avatar.transform.colorTransform = avatars.indexOf(obj) != 0 ? characterCT : defaultCT;
         avatar.loadHair();
 
         if (!(obj.strUsername in game.cache.create)) game.cache.create[obj.strUsername + "-" + obj.strGender + "-" + obj.id] = avatar;
+
+        if (avatars.indexOf(obj) == 0 && avatar.isLoaded) {
+            var randomAnimation:Array = ['Cheer', 'Backflip', 'Wave', 'Unsheath'];
+            avatar.mcChar.gotoAndPlay(randomAnimation[Math.floor(Math.random() * randomAnimation.length)]);
+        }
 
         addChildAt(avatar, 0);
     }
@@ -346,6 +363,14 @@ public class CharacterCreate extends AbstractLoader {
 
     private function fetchHairs():void {
         game.requestAPI(URLRequestMethod.GET, "game/character/hairs", null, onComplete, null);
+    }
+
+    private function initAnnouncements() : void
+    {
+        carousel = new Carousel();
+        carousel.x = 945;
+        carousel.y = 514;
+        addChild(carousel);
     }
 
     private function onComplete(event:Event):void {
@@ -640,14 +665,21 @@ public class CharacterCreate extends AbstractLoader {
     private function getSelectedItemId(): Array {
         var items:Array = [];
 
+		for each(var equipment:Object in characters[selected].eqp) {
+			if (!equipment.ItemID) continue;
+			items.push(equipment.ItemID);
+		}
+
+/*
         for (var data:String in characters) {
             if (characters[data].id == selected) continue;
 
             for each(var equipment:Object in characters[data].eqp) {
+				if (!equipment.ItemID) continue;
                 items.push(equipment.ItemID);
             }
-        }
-
+        }*/
+		
         return items;
     }
 
@@ -668,7 +700,11 @@ public class CharacterCreate extends AbstractLoader {
                 chat.popBubble("", errMsg, AvatarMC(pAV.pMC));
             }
         } else {
-            game.login(Game.loginInfo.strUsername, Game.loginInfo.strToken);
+            if (game.preference.data.strUsername && game.preference.data.strPassword) {
+                game.login(game.preference.data.strUsername, game.preference.data.strPassword);
+            } else {
+                game.mcLogin.gotoAndStop("Login");
+            }
         }
     }
 

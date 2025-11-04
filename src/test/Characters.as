@@ -157,7 +157,7 @@ public class Characters extends MovieClip {
 
         if (!(obj.strUsername in game.cache.characters)) game.cache.characters[obj.strUsername] = avatar;
 
-        if (avatars.indexOf(obj) == 0) {
+        if (avatars.indexOf(obj) == 0 && avatar.isLoaded) {
             var randomAnimation:Array = ['Cheer', 'Backflip', 'Wave', 'Unsheath'];
             avatar.mcChar.gotoAndPlay(randomAnimation[Math.floor(Math.random() * randomAnimation.length)]);
         }

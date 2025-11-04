@@ -492,6 +492,9 @@ public class RequestHandler extends Object {
 			case "resource":
 				Resource(o);
 				break;
+			case "addPetCompanion":
+				AddPetCompanion(o);
+				break;
         }
     }
 
@@ -973,7 +976,12 @@ public class RequestHandler extends Object {
 
         game.world.mapLoadInProgress = true;
         game.world.strAreaName = o.areaName;
-		game.world.strMapMusic = o.hasOwnProperty("strMusic") ? o.music : null;
+		
+		trace(">>> moveToArea");
+		trace(">>> moveToArea > strMusic > " + o.strMusic);
+		trace(">>> moveToArea > intMusicVolume > " + o.intMusicVolume);
+		
+		game.world.strMapMusic = o.hasOwnProperty("strMusic") ? o.strMusic : null;
         game.world.intMapMusicVolume = o.hasOwnProperty("intMusicVolume") ? o.intMusicVolume : 1;
         game.world.initObjExtra(o.sExtra);
         game.world.areaUsers = [];
@@ -1280,14 +1288,14 @@ public class RequestHandler extends Object {
             game.world.myAvatar.objData.intExp = (game.world.myAvatar.objData.intExp + deltaXP);
             game.updateXPBar();
 
-            if (game.world.myAvatar.petMC != null && game.world.myAvatar.petMC.objData != null)
-            {
-                game.world.myAvatar.petMC.objData.data.XP += deltaXP;
-
-                if (game.ui.mcPopup.currentLabel == "PetPanel") {
-                    MovieClip(game.ui.mcPopup.getChildByName("mcPetPanel")).update({"eventType": "updatePetExp"});
-                }
-            }
+//            if (game.world.myAvatar.petMC != null && game.world.myAvatar.petMC.objData != null)
+//            {
+//                game.world.myAvatar.petMC.objData.data.XP += deltaXP;
+//
+//                if (game.ui.mcPopup.currentLabel == "PetPanel") {
+//                    MovieClip(game.ui.mcPopup.getChildByName("mcPetPanel")).update({"eventType": "updatePetExp"});
+//                }
+//            }
 
             var xp:xpDisplay = new xpDisplay();
             xp.t.ti.text = (deltaXP + " xp");
@@ -1434,19 +1442,19 @@ public class RequestHandler extends Object {
     }
 
     private function PetLevelUp(o:Object):void {
-        var avt:Avatar = game.world.myAvatar;
-
-        if (avt == null || avt.petMC.objData == null) return;
-
-        game.world.myAvatar.healAnimation(true);
-        game.world.myAvatar.objData.petMC.objData.data.Level = o.intLevel;
-        game.world.myAvatar.objData.petMC.objData.data.XP = 0;
-        game.world.myAvatar.objData.petMC.objData.data.XPToLevel = o.intExpToLevel;
-        game.world.updatePetPortrait(avt);
-
-        if (game.ui.mcPopup.currentLabel == "PetPanel") {
-            MovieClip(game.ui.mcPopup.getChildByName("mcPetPanel")).update({"eventType": "updatePetExp"});
-        }
+//        var avt:Avatar = game.world.myAvatar;
+//
+//        if (avt == null || avt.petMC.objData == null) return;
+//
+//        game.world.myAvatar.healAnimation(true);
+//        game.world.myAvatar.objData.petMC.objData.data.Level = o.intLevel;
+//        game.world.myAvatar.objData.petMC.objData.data.XP = 0;
+//        game.world.myAvatar.objData.petMC.objData.data.XPToLevel = o.intExpToLevel;
+//        game.world.updatePetPortrait(avt);
+//
+//        if (game.ui.mcPopup.currentLabel == "PetPanel") {
+//            MovieClip(game.ui.mcPopup.getChildByName("mcPetPanel")).update({"eventType": "updatePetExp"});
+//        }
     }
 
 //    private function RetrievePetData(o:Object) : void {
@@ -1486,6 +1494,9 @@ public class RequestHandler extends Object {
 		game.world.myAvatar.pMC.updateName();
         game.world.uiLock = false;
         game.world.myAvatar.invLoaded = true;
+
+        if (o.hasOwnProperty("companions")) game.world.myAvatar.initCompanions(o.companions);
+
         if (("eventTrigger" in MovieClip(game.world.map))) {
             game.world.map.eventTrigger({"cmd": "userLoaded"});
         }
@@ -2005,13 +2016,6 @@ public class RequestHandler extends Object {
                     game.ui.mcPopup.mcTempInventory.mcItemList.refreshList();
                     game.ui.mcPopup.mcTempInventory.refreshDetail();
                 }
-            }
-
-            if (o.strES == "pe")
-            {
-				avt.petMC = null;
-                game.ui.mcPetPortrait.visible = false;
-                game.ui.btnTargetPetPortraitClose.visible = false;
             }
         }
     }
@@ -3424,52 +3428,48 @@ public class RequestHandler extends Object {
     }
 
     private function PetSta(o:Object):void {
-        var avt:Avatar = game.world.myAvatar;
-        var str:String;
-
-        if (!("pet" in avt.objData)) avt.petMC.objData = {};
-
-        if (avt != null && avt.petMC.objData != null && "sta" in o) {
-            avt.petMC.objData.sta = o.sta;
-		/*
-                if (avt.objData.pet.hasOwnProperty("sta"))
-                {
-                    for (str in o.data) {
-                        if (avt.objData.pet.sta.hasOwnProperty(str)) {
-                            avt.objData.pet.sta[str] = o.sta[str];
-                        }
-                    }
-                }
-                else
-                {
-                    avt.objData.pet.sta = o.sta;
-                }
-		*/
-        }
+//        var avt:Avatar = game.world.myAvatar;
+//        var str:String;
+//
+//        if (!("pet" in avt.objData)) avt.petMC.objData = {};
+//
+//        if (avt != null && avt.petMC.objData != null && "sta" in o) {
+//            avt.petMC.objData.sta = o.sta;
+//		/*
+//                if (avt.objData.pet.hasOwnProperty("sta"))
+//                {
+//                    for (str in o.data) {
+//                        if (avt.objData.pet.sta.hasOwnProperty(str)) {
+//                            avt.objData.pet.sta[str] = o.sta[str];
+//                        }
+//                    }
+//                }
+//                else
+//                {
+//                    avt.objData.pet.sta = o.sta;
+//                }
+//		*/
+//        }
     }
 	
 	private function RetrievePetData(o:Object) : void {
-	    var avt:Avatar = game.world.myAvatar;
-        var str:String;
-		
-		if (!("pet" in avt.objData)) avt.petMC.objData = {};
-		
-        if (avt != null && avt.petMC != null && "data" in o) {
-            if (avt.petMC.objData.hasOwnProperty("data"))
-            {
-                for (str in o.data) {
-                    if (avt.petMC.objData.data.hasOwnProperty(str)) {
-                        avt.petMC.objData.data[str] = o.data[str];
-                    }
-                }
-            } else {
-                avt.petMC.objData.data = o.data;
-            }
-
-            game.ui.mcPetPortrait.visible = true;
-            game.ui.btnTargetPetPortraitClose.visible = true;
-            game.world.updatePetPortrait(avt);
-		}
+//	    var avt:Avatar = game.world.myAvatar;
+//
+//		if (!("pet" in avt.objData)) avt.petMC.objData = {};
+//
+//        if (avt != null && avt.petMC != null && "data" in o) {
+//            if (avt.petMC.objData.hasOwnProperty("data"))
+//            {
+//                for (var str:String in o.data) {
+//                    if (avt.petMC.objData.data.hasOwnProperty(str)) {
+//                        avt.petMC.objData.data[str] = o.data[str];
+//                    }
+//                }
+//            } else {
+//                avt.petMC.objData.data = o.data;
+//            }
+//
+//		}
 	}
 
     private function SendLinkedItems(o:Object) : void {
@@ -3488,11 +3488,8 @@ public class RequestHandler extends Object {
     private function TestBoosts(o:Object) : void {
         if (!o.hasOwnProperty("option")) return;
 
-		trace("TES BOOSTS DATA > " + JSON.stringify(o));
-
         if (o.option == "+" && o.hasOwnProperty("xpBoost"))
         {
-			trace("xpBoost > ENABLED");
             game.world.myAvatar.objData.iBoostXP = o.xpBoost;
             game.addUpdate("You have activated the Experience Boost!  All Experience rewards are doubled while the effect holds. " + Math.ceil(o.xpBoost / 60) + " minute(s) remaining.");
             game.boosts.createIconMC("XpBoost", "icbxp", Math.ceil(o.xpBoost / 60));
@@ -4018,6 +4015,13 @@ public class RequestHandler extends Object {
 		game.world.resources[o.ResMapID].QuantityRemain = int(o.QuantityRemain);
 		
 		// UPDATE TEXT FIELD!
+	}
+	
+	private function AddPetCompanion(o:Object) : void
+	{
+        if (game.world.myAvatar.companions.hasOwnProperty(o.data.id)) return;
+
+        game.world.myAvatar.companions[o.data.id] = o.data;
 	}
 
 }

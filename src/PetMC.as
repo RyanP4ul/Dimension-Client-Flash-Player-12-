@@ -17,6 +17,7 @@ package
         public var defaultmc:MovieClip;
         public var pname:MovieClip;
         public var shadow:MovieClip;
+		public var petId:int = -1;
         public var objData:Object = null;
         internal var ldr:Loader = new Loader();
         internal var WORLD:MovieClip;
